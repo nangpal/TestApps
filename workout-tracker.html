@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workout Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #2563eb;
+      --done: #16a34a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: -16px -16px 16px;
+      padding: 14px 16px;
+      background: rgba(246, 247, 249, 0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0 0;
+    }
+
+    button, input {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    button {
+      padding: 0 12px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .exercise {
+      margin: 12px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .exercise h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .set {
+      display: grid;
+      grid-template-columns: 48px 1fr 1fr 52px;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .set label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .set input {
+      width: 100%;
+      padding: 0 10px;
+      background: #fff;
+    }
+
+    .check {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      font-size: 1.1rem;
+    }
+
+    .check.done {
+      border-color: var(--done);
+      background: var(--done);
+      color: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 88px;
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      resize: vertical;
+    }
+
+    .output {
+      white-space: pre-wrap;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #111827;
+    }
+
+    @media (max-width: 520px) {
+      main { padding: 12px; }
+      header { margin: -12px -12px 12px; padding: 12px; }
+      .toolbar { flex-wrap: wrap; }
+      .toolbar button { flex: 1 1 120px; }
+      .set { grid-template-columns: 42px 1fr 1fr 48px; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Workout Tracker</h1>
+      <div class="date" id="dateLabel"></div>
+      <div class="toolbar">
+        <button class="primary" id="copyLog">Copy Log</button>
+        <button id="resetToday">Reset Today</button>
+      </div>
+    </header>
+
+    <section id="workout"></section>
+    <textarea id="notes" placeholder="Notes: effort, soreness, substitutions, anything skipped..."></textarea>
+    <div class="output" id="output"></div>
+  </main>
+
+  <script>
+    const exercises = [
+      "One-arm Cable Chest Press with Rotation",
+      "Cable Deadlift",
+      "Standing Lat Pulldown",
+      "Get-ups from Low Step"
+    ];
+
+    const today = new Date().toISOString().slice(0, 10);
+    const storageKey = `workout-tracker-${today}`;
+    const defaultState = {
+      notes: "",
+      sets: exercises.map(() => [
+        { weight: "", reps: "12", done: false },
+        { weight: "", reps: "12", done: false },
+        { weight: "", reps: "12", done: false }
+      ])
+    };
+
+    let state = JSON.parse(localStorage.getItem(storageKey) || "null") || defaultState;
+
+    const workout = document.querySelector("#workout");
+    const notes = document.querySelector("#notes");
+    const output = document.querySelector("#output");
+    document.querySelector("#dateLabel").textContent = `Workout Log - ${today}`;
+
+    function save() {
+      state.notes = notes.value;
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      renderOutput();
+    }
+
+    function render() {
+      workout.innerHTML = "";
+      exercises.forEach((name, exerciseIndex) => {
+        const section = document.createElement("section");
+        section.className = "exercise";
+        section.innerHTML = `<h2>${name}</h2>`;
+
+        state.sets[exerciseIndex].forEach((set, setIndex) => {
+          const row = document.createElement("div");
+          row.className = "set";
+          row.innerHTML = `
+            <label>Set ${setIndex + 1}</label>
+            <input inputmode="decimal" aria-label="${name} set ${setIndex + 1} weight" placeholder="Weight" value="${set.weight}">
+            <input inputmode="numeric" aria-label="${name} set ${setIndex + 1} reps" placeholder="Reps" value="${set.reps}">
+            <button class="check ${set.done ? "done" : ""}" aria-label="Toggle set done">${set.done ? "✓" : ""}</button>
+          `;
+
+          const [weightInput, repsInput] = row.querySelectorAll("input");
+          const doneButton = row.querySelector("button");
+          weightInput.addEventListener("input", () => {
+            set.weight = weightInput.value;
+            save();
+          });
+          repsInput.addEventListener("input", () => {
+            set.reps = repsInput.value;
+            save();
+          });
+          doneButton.addEventListener("click", () => {
+            set.done = !set.done;
+            render();
+            save();
+          });
+
+          section.appendChild(row);
+        });
+
+        workout.appendChild(section);
+      });
+
+      notes.value = state.notes;
+      renderOutput();
+    }
+
+    function renderOutput() {
+      const lines = [`Workout Log - ${today}`, ""];
+      exercises.forEach((name, exerciseIndex) => {
+        lines.push(name);
+        state.sets[exerciseIndex].forEach((set, setIndex) => {
+          const status = set.done ? "✓" : "not done";
+          lines.push(`  Set ${setIndex + 1}: ${set.weight || "BW"} × ${set.reps || "?"} ${status}`);
+        });
+        lines.push("");
+      });
+      if (notes.value.trim()) {
+        lines.push("Notes");
+        lines.push(notes.value.trim());
+      }
+      output.textContent = lines.join("\n").trim();
+    }
+
+    notes.addEventListener("input", save);
+    document.querySelector("#resetToday").addEventListener("click", () => {
+      state = structuredClone(defaultState);
+      notes.value = "";
+      save();
+      render();
+    });
+    document.querySelector("#copyLog").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(output.textContent);
+    });
+
+    render();
+  </script>
+</body>
+</html>
