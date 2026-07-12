@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Golf OS v2.2</title>
+<style>
+:root{--bg:#0f172a;--card:#111827;--muted:#94a3b8;--text:#f8fafc;--accent:#38bdf8;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#334155}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#020617,#0f172a);color:var(--text);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+.app{max-width:520px;margin:0 auto;padding:12px 0 80px}.top{position:sticky;top:0;z-index:5;background:rgba(15,23,42,.94);backdrop-filter:blur(10px);padding:10px 0;border-bottom:1px solid var(--line)}
+h1{font-size:20px;margin:0 0 6px}.sub{color:var(--muted);font-size:13px}.card{background:rgba(17,24,39,.92);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 10px 25px rgba(0,0,0,.22)}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}.pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-size:13px;margin:3px 4px 3px 0}.pill strong{color:var(--text)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px} select,input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#020617;color:var(--text);font-size:16px}textarea{min-height:78px;resize:vertical}
+button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:700;color:#06111f;background:var(--accent);width:100%;margin:6px 0}button.secondary{background:#1e293b;color:var(--text);border:1px solid var(--line)}button.good{background:var(--good)}button.warn{background:var(--warn)}button.bad{background:var(--bad);color:white}button.small{font-size:13px;padding:9px 10px;border-radius:11px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.choice{background:#020617;color:var(--text);border:1px solid var(--line)}.choice.active{outline:2px solid var(--accent);background:#082f49}.choice.good.active{outline-color:var(--good)}.choice.bad.active{outline-color:var(--bad)}
+.hidden{display:none!important}.stepTitle{font-size:22px;font-weight:800;margin:4px 0}.big{font-size:28px;font-weight:900}.muted{color:var(--muted)}.summary{font-size:14px;line-height:1.45}.shotline{padding:10px;border:1px solid var(--line);border-radius:12px;margin:8px 0;background:#020617}.footer{position:fixed;left:0;right:0;bottom:0;background:rgba(2,6,23,.95);border-top:1px solid var(--line);padding:8px 12px env(safe-area-inset-bottom);}.footer .inner{max-width:520px;margin:0 auto;display:flex;gap:8px}.footer button{margin:0}.ok{color:var(--good)}.warnText{color:var(--warn)}.badText{color:var(--bad)}
+</style>
+</head>
+<body><div class="app">
+<div class="top"><h1>Golf OS v2.2</h1><div class="sub" id="status">Setup round</div></div>
+
+<section id="setup" class="card">
+ <div class="stepTitle">Start Round</div>
+ <div class="row"><div><label>Course</label><select id="course"></select></div><div><label>Tee</label><select id="tee"></select></div></div>
+ <div class="row"><div><label>Round Goal</label><select id="goal"><option>Break 90</option><option>Break 85</option><option>No doubles</option><option>Learning round</option></select></div><div><label>Today's swing cue</label><select id="cue"><option>Lead heel → club behind me</option><option>Soft hands</option><option>Complete backswing / wait</option><option>Centered turn</option><option>5W day</option></select></div></div>
+ <button onclick="startRound()">Start Round</button>
+ <button class="secondary" onclick="loadSaved()">Load Saved Round</button>
+</section>
+
+<section id="play" class="hidden">
+ <div class="card">
+  <div class="row"><div><div class="muted">Hole</div><div class="big" id="holeNum">1</div></div><div><div class="muted">Par / Yds</div><div class="big" id="holeParYds">4 / 0</div></div><div><div class="muted">Score</div><div class="big" id="scoreSoFar">E</div></div></div>
+  <div id="holePills"></div>
+ </div>
+
+ <div id="shotCard" class="card">
+  <div class="stepTitle" id="shotTitle">Shot</div>
+  <div id="shotStep"></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Hole Log</div>
+  <div id="holeLog" class="summary muted">No shots yet.</div>
+  <div class="grid"><button class="secondary" onclick="undoShot()">Undo Last</button><button class="secondary" onclick="finishHole()">Finish Hole</button></div><button class="bad" onclick="endRoundNow()">End Round Now</button>
+ </div>
+</section>
+
+<section id="review" class="hidden card">
+ <div class="stepTitle">Round Review</div>
+ <div id="roundSummary" class="summary"></div>
+ <button onclick="downloadJSON()">Download Round JSON</button>
+ <button class="secondary" onclick="copyJSON()">Copy JSON</button>
+ <button class="secondary" onclick="newRound()">New Round</button>
+</section>
+</div>
+
+<div id="footer" class="footer hidden"><div class="inner"><button class="secondary" onclick="prevHole()">← Hole</button><button onclick="nextHole()">Hole →</button></div></div>
+
+<script>
+const courses={
+ "The Architects Golf Club":{tees:{Black:[509,195,521,440,355,145,412,187,447,375,544,191,524,482,473,463,200,400],Gold:[500,185,510,422,345,135,400,174,410,358,523,182,494,454,432,443,180,385],Blue:[485,165,497,405,335,116,375,163,395,348,500,159,475,400,405,423,171,355],Red:[404,122,414,350,283,100,331,110,337,291,437,138,407,354,352,350,142,311]},par:[5,3,5,4,4,3,4,3,4,4,5,3,5,4,4,4,3,4],hcp:[15,9,5,7,13,17,3,11,1,14,10,16,6,4,2,8,18,12]},
+ "Spooky Brook":{tees:{Gold:[485,419,153,446,539,404,357,196,374,362,187,373,527,410,366,165,382,510],Blue:[470,394,136,415,512,378,339,173,351,342,168,350,500,385,344,145,360,485]},par:[5,4,3,4,5,4,4,3,4,4,3,4,5,4,4,3,4,5]},
+ "Peddie":{tees:{White:[523,352,115,380,121,381,492,350,413,385,307,560,170,485,360,157,177,550]},par:[5,4,3,4,3,4,5,4,4,4,4,5,3,5,4,3,3,5]},
+ "Neshanic Academy (9)":{note:"Placeholder scorecard: confirm exact hole yardages at course.",tees:{Back:[250,145,285,160,310,170,300,150,249],Middle:[210,125,250,140,275,150,260,130,230],Forward:[170,105,210,120,235,130,220,110,200]},par:[4,3,4,3,4,3,4,3,4]},
+ "Green Knoll":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[500,340,375,160,390,175,410,150,360,370,155,420,340,500,180,390,360,380]},par:[5,4,4,3,4,3,4,3,4,4,3,4,4,5,3,4,4,4]},
+ "Quail Brook":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[520,380,165,405,390,520,175,360,410,395,150,535,370,420,180,400,365,550]},par:[5,4,3,4,4,5,3,4,4,4,3,5,4,4,3,4,4,5]},
+ "Blank 18":{tees:{Default:Array(18).fill(0)},par:Array(18).fill(4)},
+ "Blank 9":{tees:{Default:Array(9).fill(0)},par:Array(9).fill(4)}
+};
+const clubs=['Driver','5W','7W','Hybrid','5i','6i','7i','8i','9i','PW','52°','56°','Putter','Other'];
+const lies=['Tee','Fairway','Rough','Sand','Recovery','Fringe','Green','Penalty'];
+const failures=['Fat','Thin','Push','Pull','Hook','Slice','Heel','Toe','Short','Long','Bad decision','Rushed','No commitment','Other'];
+const drivers=['None / not sure','Pressure not to lead heel','Tempo rushed','Hands took over','Face closed fast','Pelvis drifted','Ball position','Bad target / club choice','Low tee / changed task','Wind/lie misread','Other'];
+let round=null, holeIdx=0, draft={};
+function $(id){return document.getElementById(id)}
+function init(){fillSelect('course',Object.keys(courses)); onCourseChange(); $('course').addEventListener('change',onCourseChange);}
+function fillSelect(id,arr){$(id).innerHTML=arr.map(x=>`<option value="${x}">${x}</option>`).join('')}
+function onCourseChange(){fillSelect('tee',Object.keys(courses[$('course').value].tees))}
+function startRound(){const c=$('course').value,t=$('tee').value; const course=courses[c]; round={date:new Date().toISOString(),course:c,tee:t,goal:$('goal').value,cue:$('cue').value,courseNote:course.note||'',holes:course.par.map((p,i)=>({hole:i+1,par:p,yards:course.tees[t][i],shots:[],lesson:''}))}; holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden'); renderHole(); save();}
+function renderHole(){const h=round.holes[holeIdx]; $('status').textContent=`${round.course} • ${round.tee} • ${round.goal}${round.courseNote?' • check yardages':''}`;$('holeNum').textContent=h.hole;$('holeParYds').textContent=`${h.par} / ${h.yards||'—'}`; const score=round.holes.reduce((a,x)=>a+x.shots.length,0)-round.holes.slice(0,holeIdx+1).reduce((a,x)=>a+x.par,0); $('scoreSoFar').textContent=score===0?'E':score>0?'+'+score:String(score); $('holePills').innerHTML=`<span class="pill"><strong>${h.shots.length}</strong> shots</span><span class="pill"><strong>${h.shots.filter(s=>s.type==='Putt').length}</strong> putts</span><span class="pill"><strong>${h.lesson?'✓':'—'}</strong> lesson</span>`; renderLog(); startShot();}
+function startShot(){draft={type:suggestType()}; renderTypeStep();}
+function suggestType(){const h=round.holes[holeIdx]; if(h.shots.length===0 && h.par!==3) return 'Tee'; if(h.shots.some(s=>s.type==='Putt')) return 'Putt'; return 'Approach';}
+function renderTypeStep(){ $('shotTitle').textContent=`Shot ${round.holes[holeIdx].shots.length+1}`; const types=['Tee','Approach','Greenside','Putt','Penalty']; $('shotStep').innerHTML=`<div class="muted">What kind of shot?</div><div class="grid">${types.map(t=>`<button class="choice ${draft.type===t?'active':''}" onclick="draft.type='${t}';renderDetailStep()">${t}</button>`).join('')}</div>`;}
+function renderDetailStep(){ if(draft.type==='Putt') return renderPuttStep(); if(draft.type==='Greenside') return renderGreensideStep(); if(draft.type==='Penalty') return saveShot({type:'Penalty',club:'Penalty',lie:'Penalty',quality:'Poor',failure:'Penalty'});
+ const defaultClub=draft.type==='Tee'?'Driver':'52°'; draft.club=draft.club||defaultClub; draft.lie=draft.lie||(draft.type==='Tee'?'Tee':'Fairway'); $('shotStep').innerHTML=`<label>Club</label><select id="clubSel">${clubs.map(c=>`<option ${c===draft.club?'selected':''}>${c}</option>`).join('')}</select><label>Lie</label><select id="lieSel">${lies.map(l=>`<option ${l===draft.lie?'selected':''}>${l}</option>`).join('')}</select><label>Distance to hole (optional)</label><input id="dist" type="number" placeholder="yards"><div class="muted">Quality</div><div class="grid">${['Great','Good','OK','Poor'].map(q=>`<button class="choice ${q==='Poor'?'bad':''}" onclick="draft.club=$('clubSel').value;draft.lie=$('lieSel').value;draft.distance=$('dist').value;draft.quality='${q}';${(q==='Poor'||q==='OK')?'renderFailureStep()':'saveShot(draft)'}">${q}</button>`).join('')}</div><button class="secondary" onclick="captureGPS()">Capture GPS</button><div id="gpsStatus" class="muted"></div><button class="secondary" onclick="renderTypeStep()">Back</button>`;}
+function renderFailureStep(){ $('shotStep').innerHTML=`<div class="muted">${draft.quality==='OK'?'OK means playable but imperfect. What was the main miss?':'What happened? Pick the visible miss first.'}</div><div class="grid">${failures.map(f=>`<button class="choice bad" onclick="draft.failure='${f}';renderDriverStep()">${f}</button>`).join('')}</div><button class="secondary" onclick="renderDetailStep()">Back</button>`;}
+function renderDriverStep(){ $('shotStep').innerHTML=`<div class="muted">Optional: likely driver / cause. Skip if it would create swing clutter.</div><div class="grid">${drivers.map(d=>`<button class="choice" onclick="draft.driver='${d}';saveShot(draft)">${d}</button>`).join('')}</div><button class="secondary" onclick="saveShot(draft)">Skip cause</button><button class="secondary" onclick="renderFailureStep()">Back</button>`;}
+function renderGreensideStep(){ const gs=['Putt from fringe','Bump','Chip','Pitch','Lob','Bunker']; $('shotStep').innerHTML=`<div class="muted">Greenside shot</div><div class="grid">${gs.map(g=>`<button class="choice" onclick="draft.club='${g==='Putt from fringe'?'Putter':'Wedge'}';draft.greenside='${g}';renderGreensideFinish()">${g}</button>`).join('')}</div><button class="secondary" onclick="renderTypeStep()">Back</button>`;}
+function renderGreensideFinish(){ const f=['Holed','Inside 3 ft','3-6 ft','6-15 ft','>15 ft','Missed green']; $('shotStep').innerHTML=`<div class="muted">Finish distance</div><div class="grid">${f.map(x=>`<button class="choice" onclick="saveShot({...draft,type:'Greenside',quality:'${x==='Missed green'?'Poor':'OK'}',finish:'${x}'})">${x}</button>`).join('')}</div>`;}
+function renderPuttStep(){ $('shotStep').innerHTML=`<label>First putt / putt length (ft)</label><input id="puttLen" type="number" placeholder="e.g. 25"><div class="muted">Result</div><div class="grid"><button class="choice good" onclick="saveShot({type:'Putt',club:'Putter',lie:'Green',puttLength:$('puttLen').value,quality:'Great',holed:true})">Holed</button><button class="choice" onclick="saveShot({type:'Putt',club:'Putter',lie:'Green',puttLength:$('puttLen').value,quality:'OK',holed:false})">Not holed</button></div><button class="secondary" onclick="renderTypeStep()">Back</button>`;}
+function captureGPS(){ if(!navigator.geolocation){$('gpsStatus').textContent='GPS unavailable.';return} $('gpsStatus').textContent='Requesting GPS...'; navigator.geolocation.getCurrentPosition(p=>{draft.gps={lat:p.coords.latitude,lon:p.coords.longitude,accuracy:p.coords.accuracy}; $('gpsStatus').textContent=`GPS captured ±${Math.round(p.coords.accuracy)}m`;},e=>{$('gpsStatus').textContent='GPS error: '+e.message},{enableHighAccuracy:true,timeout:10000});}
+function saveShot(s){s.time=new Date().toISOString(); round.holes[holeIdx].shots.push({...s}); save(); renderHole();}
+function renderLog(){const h=round.holes[holeIdx]; if(!h.shots.length){$('holeLog').textContent='No shots yet.';return} $('holeLog').innerHTML=h.shots.map((s,i)=>`<div class="shotline"><strong>${i+1}. ${s.type}</strong> • ${s.club||''} • ${s.lie||''} • ${s.quality||''}${s.failure?' • <span class="badText">'+s.failure+'</span>':''}${s.driver&&s.driver!=='None / not sure'?' • '+s.driver:''}${s.distance?' • '+s.distance+' yd':''}${s.puttLength?' • '+s.puttLength+' ft putt':''}${s.greenside?' • '+s.greenside:''}${s.finish?' • '+s.finish:''}</div>`).join('')+`<label>Hole lesson / note</label><textarea id="lesson" oninput="round.holes[holeIdx].lesson=this.value;save()" placeholder="e.g. 5W was right play; 52° felt uncomfortable">${h.lesson||''}</textarea>`;}
+function undoShot(){const h=round.holes[holeIdx]; h.shots.pop(); save(); renderHole();}
+function finishHole(){if(holeIdx<round.holes.length-1){holeIdx++;renderHole()}else{showReview()}}
+function nextHole(){if(!round)return; if(holeIdx<round.holes.length-1){holeIdx++;renderHole()}else showReview()}
+function prevHole(){if(!round)return; if(holeIdx>0){holeIdx--;renderHole()}}
+function endRoundNow(){ if(!round)return; if(confirm('End this round now and go to review?')) showReview();}
+function showReview(){ $('play').classList.add('hidden');$('footer').classList.add('hidden');$('review').classList.remove('hidden'); const played=round.holes.filter(h=>h.shots.length>0); const shots=played.flatMap(h=>h.shots.map(s=>({...s,hole:h.hole,par:h.par}))); const score=shots.length-played.reduce((a,h)=>a+h.par,0); const putts=shots.filter(s=>s.type==='Putt').length; const poor=shots.filter(s=>s.quality==='Poor'); const imperfect=shots.filter(s=>s.quality==='Poor'||s.quality==='OK'); const inside100=shots.filter(s=>s.distance&&Number(s.distance)<=100&&s.type!=='Putt'); const in150=shots.filter(s=>s.distance&&Number(s.distance)<=150&&s.type!=='Putt'); const clubs={}; shots.forEach(s=>clubs[s.club]=(clubs[s.club]||0)+1); $('roundSummary').innerHTML=`<p><strong>${round.course}</strong> • ${round.tee} • ${played.length} holes played • Score vs par played: <strong>${score>=0?'+'+score:score}</strong></p><p>Shots: ${shots.length} • Putts: ${putts} • OK/Poor shots: ${imperfect.length} • Poor shots: ${poor.length}</p><p>Inside 100: ${inside100.length} shots • 150 and in: ${in150.length} shots</p><p>Top clubs: ${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(', ')}</p><p>Top failures: ${Object.entries(imperfect.reduce((a,s)=>{a[s.failure||'Unknown']=(a[s.failure||'Unknown']||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p><p>Top drivers: ${Object.entries(imperfect.reduce((a,s)=>{if(s.driver&&s.driver!=='None / not sure')a[s.driver]=(a[s.driver]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p>`; save();}
+function save(){localStorage.setItem('golfOSv22',JSON.stringify(round))}
+function loadSaved(){const x=localStorage.getItem('golfOSv22'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
+function newRound(){localStorage.removeItem('golfOSv22'); location.reload()}
+function getJSON(){return JSON.stringify(round,null,2)}
+function downloadJSON(){const b=new Blob([getJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`golf_round_${round.course}_${round.date.slice(0,10)}.json`; a.click();}
+async function copyJSON(){try{await navigator.clipboard.writeText(getJSON()); alert('Copied JSON to clipboard.')}catch(e){alert('Copy failed. Use Download Round JSON.')}}
+init();
+</script></body></html>
