@@ -1,279 +1,436 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Workout Tracker</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f6f7f9;
-      --panel: #ffffff;
-      --text: #111827;
-      --muted: #667085;
-      --line: #d9dee7;
-      --accent: #2563eb;
-      --done: #16a34a;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    main {
-      width: min(760px, 100%);
-      margin: 0 auto;
-      padding: 16px;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      margin: -16px -16px 16px;
-      padding: 14px 16px;
-      background: rgba(246, 247, 249, 0.96);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(8px);
-    }
-
-    h1 {
-      margin: 0 0 4px;
-      font-size: 1.35rem;
-      line-height: 1.2;
-    }
-
-    .date {
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      margin: 12px 0 0;
-    }
-
-    button, input {
-      min-height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      font: inherit;
-    }
-
-    button {
-      padding: 0 12px;
-      background: var(--panel);
-      color: var(--text);
-      font-weight: 650;
-    }
-
-    button.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .exercise {
-      margin: 12px 0;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-    }
-
-    .exercise h2 {
-      margin: 0 0 10px;
-      font-size: 1.05rem;
-    }
-
-    .set {
-      display: grid;
-      grid-template-columns: 48px 1fr 1fr 52px;
-      gap: 8px;
-      align-items: center;
-      margin-top: 8px;
-    }
-
-    .set label {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .set input {
-      width: 100%;
-      padding: 0 10px;
-      background: #fff;
-    }
-
-    .check {
-      width: 44px;
-      height: 44px;
-      padding: 0;
-      font-size: 1.1rem;
-    }
-
-    .check.done {
-      border-color: var(--done);
-      background: var(--done);
-      color: #fff;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 88px;
-      margin-top: 12px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      font: inherit;
-      resize: vertical;
-    }
-
-    .output {
-      white-space: pre-wrap;
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      color: #111827;
-    }
-
-    @media (max-width: 520px) {
-      main { padding: 12px; }
-      header { margin: -12px -12px 12px; padding: 12px; }
-      .toolbar { flex-wrap: wrap; }
-      .toolbar button { flex: 1 1 120px; }
-      .set { grid-template-columns: 42px 1fr 1fr 48px; gap: 6px; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout Tracker Static</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f2f2f2;color:#111}
+header{background:#111;color:white;padding:14px;position:sticky;top:0;z-index:2}
+h1{font-size:20px;margin:0}
+main{padding:10px}
+.card{background:white;border:1px solid #ddd;border-radius:12px;padding:12px;margin:10px 0}
+.group{font-size:12px;color:#666;font-weight:bold;text-transform:uppercase}
+.name{font-size:18px;font-weight:bold;margin:4px 0}
+.target{font-size:13px;color:#555;margin:4px 0 8px}
+label{font-size:12px;color:#555}
+input,select,textarea,button{font-size:16px;border-radius:8px;border:1px solid #bbb;padding:8px;box-sizing:border-box}
+input,select,textarea{width:100%}
+button{background:#111;color:white;border:0;font-weight:bold;margin:4px 2px;padding:10px}
+button.gray{background:#e8e8e8;color:#111}
+.setrow{display:grid;grid-template-columns:1fr 1fr 70px;gap:6px;align-items:end;margin:8px 0}
+.check{width:auto;transform:scale(1.4)}
+textarea{min-height:80px}
+#output{white-space:pre-wrap;background:white;border:1px solid #bbb;border-radius:10px;padding:10px;min-height:120px;font-family:Arial,Helvetica,sans-serif}
+.small{font-size:12px;color:#666}
+</style>
 </head>
 <body>
-  <main>
-    <header>
-      <h1>Workout Tracker</h1>
-      <div class="date" id="dateLabel"></div>
-      <div class="toolbar">
-        <button class="primary" id="copyLog">Copy Log</button>
-        <button id="resetToday">Reset Today</button>
-      </div>
-    </header>
+<header><h1>Workout Tracker Static</h1></header>
+<main>
 
-    <section id="workout"></section>
-    <textarea id="notes" placeholder="Notes: effort, soreness, substitutions, anything skipped..."></textarea>
-    <div class="output" id="output"></div>
-  </main>
+<div class="card">
+<label>Date</label>
+<input id="date" type="date">
+<p class="small">This version has all exercises hardcoded. Rule: unchecked sets export as not done.</p>
+<button onclick="makeSummary()">Create Summary</button>
+<button class="gray" onclick="copySummary()">Copy Summary</button>
+<button class="gray" onclick="saveData()">Save</button>
+<button class="gray" onclick="clearData()">Clear</button>
+</div>
 
-  <script>
-    const exercises = [
-      "One-arm Cable Chest Press with Rotation",
-      "Cable Deadlift",
-      "Standing Lat Pulldown",
-      "Get-ups from Low Step"
-    ];
 
-    const today = new Date().toISOString().slice(0, 10);
-    const storageKey = `workout-tracker-${today}`;
-    const defaultState = {
-      notes: "",
-      sets: exercises.map(() => [
-        { weight: "", reps: "12", done: false },
-        { weight: "", reps: "12", done: false },
-        { weight: "", reps: "12", done: false }
-      ])
-    };
+<div class="card exercise" data-name="One-arm Cable Chest Press with Rotation" data-sets="3" data-index="0">
+  <div class="group">Pair 1</div>
+  <div class="name">One-arm Cable Chest Press with Rotation</div>
+  <div class="target">Target: 12 lb — 3 x 12/side</div>
+  <label>Status</label>
+  <select id="status_0">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_0_1" value="12"></div>
+  <div><label>Reps</label><input id="r_0_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_0_2" value="12"></div>
+  <div><label>Reps</label><input id="r_0_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_0_3" value="12"></div>
+  <div><label>Reps</label><input id="r_0_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_3"></div>
+</div>
+</div>
 
-    let state = JSON.parse(localStorage.getItem(storageKey) || "null") || defaultState;
+<div class="card exercise" data-name="Cable Deadlift" data-sets="3" data-index="1">
+  <div class="group">Pair 1</div>
+  <div class="name">Cable Deadlift</div>
+  <div class="target">Target: 15 lb/side — 3 x 12; confirm if this should be 30 lb/side</div>
+  <label>Status</label>
+  <select id="status_1">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_1_1" value="15/side"></div>
+  <div><label>Reps</label><input id="r_1_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_1_2" value="15/side"></div>
+  <div><label>Reps</label><input id="r_1_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_1_3" value="15/side"></div>
+  <div><label>Reps</label><input id="r_1_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_3"></div>
+</div>
+</div>
 
-    const workout = document.querySelector("#workout");
-    const notes = document.querySelector("#notes");
-    const output = document.querySelector("#output");
-    document.querySelector("#dateLabel").textContent = `Workout Log - ${today}`;
+<div class="card exercise" data-name="Standing Lat Pulldown" data-sets="3" data-index="2">
+  <div class="group">Pair 2</div>
+  <div class="name">Standing Lat Pulldown</div>
+  <div class="target">Target: 30 lb/side — 3 x 12</div>
+  <label>Status</label>
+  <select id="status_2">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_2_1" value="30/side"></div>
+  <div><label>Reps</label><input id="r_2_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_2_2" value="30/side"></div>
+  <div><label>Reps</label><input id="r_2_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_2_3" value="30/side"></div>
+  <div><label>Reps</label><input id="r_2_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_3"></div>
+</div>
+</div>
 
-    function save() {
-      state.notes = notes.value;
-      localStorage.setItem(storageKey, JSON.stringify(state));
-      renderOutput();
-    }
+<div class="card exercise" data-name="Get-ups from Low Step" data-sets="3" data-index="3">
+  <div class="group">Pair 2</div>
+  <div class="name">Get-ups from Low Step</div>
+  <div class="target">Target: Bodyweight — 3 x 12</div>
+  <label>Status</label>
+  <select id="status_3">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_3_1" value="BW"></div>
+  <div><label>Reps</label><input id="r_3_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_3_2" value="BW"></div>
+  <div><label>Reps</label><input id="r_3_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_3_3" value="BW"></div>
+  <div><label>Reps</label><input id="r_3_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_3"></div>
+</div>
+</div>
 
-    function render() {
-      workout.innerHTML = "";
-      exercises.forEach((name, exerciseIndex) => {
-        const section = document.createElement("section");
-        section.className = "exercise";
-        section.innerHTML = `<h2>${name}</h2>`;
+<div class="card exercise" data-name="Assisted Pull-up" data-sets="3" data-index="4">
+  <div class="group">Pair 3</div>
+  <div class="name">Assisted Pull-up</div>
+  <div class="target">Target: 110 lb assistance — 3 x 8-10</div>
+  <label>Status</label>
+  <select id="status_4">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_4_1" value="110 assist"></div>
+  <div><label>Reps</label><input id="r_4_1" value="8-10"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_4_2" value="110 assist"></div>
+  <div><label>Reps</label><input id="r_4_2" value="8-10"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_4_3" value="110 assist"></div>
+  <div><label>Reps</label><input id="r_4_3" value="8-10"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_3"></div>
+</div>
+</div>
 
-        state.sets[exerciseIndex].forEach((set, setIndex) => {
-          const row = document.createElement("div");
-          row.className = "set";
-          row.innerHTML = `
-            <label>Set ${setIndex + 1}</label>
-            <input inputmode="decimal" aria-label="${name} set ${setIndex + 1} weight" placeholder="Weight" value="${set.weight}">
-            <input inputmode="numeric" aria-label="${name} set ${setIndex + 1} reps" placeholder="Reps" value="${set.reps}">
-            <button class="check ${set.done ? "done" : ""}" aria-label="Toggle set done">${set.done ? "✓" : ""}</button>
-          `;
+<div class="card exercise" data-name="Rear-foot Elevated Split Lunge" data-sets="2" data-index="5">
+  <div class="group">Pair 3</div>
+  <div class="name">Rear-foot Elevated Split Lunge</div>
+  <div class="target">Target: Bodyweight — 2 x 12/side</div>
+  <label>Status</label>
+  <select id="status_5">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_5_1" value="BW"></div>
+  <div><label>Reps</label><input id="r_5_1" value="12/side"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_5_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_5_2" value="BW"></div>
+  <div><label>Reps</label><input id="r_5_2" value="12/side"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_5_2"></div>
+</div>
+</div>
 
-          const [weightInput, repsInput] = row.querySelectorAll("input");
-          const doneButton = row.querySelector("button");
-          weightInput.addEventListener("input", () => {
-            set.weight = weightInput.value;
-            save();
-          });
-          repsInput.addEventListener("input", () => {
-            set.reps = repsInput.value;
-            save();
-          });
-          doneButton.addEventListener("click", () => {
-            set.done = !set.done;
-            render();
-            save();
-          });
+<div class="card exercise" data-name="Standing Two-Handle Cable Row" data-sets="3" data-index="6">
+  <div class="group">Pair 4</div>
+  <div class="name">Standing Two-Handle Cable Row</div>
+  <div class="target">Target: 20 lb/side — 3 x 12</div>
+  <label>Status</label>
+  <select id="status_6">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_6_1" value="20/side"></div>
+  <div><label>Reps</label><input id="r_6_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_6_2" value="20/side"></div>
+  <div><label>Reps</label><input id="r_6_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_6_3" value="20/side"></div>
+  <div><label>Reps</label><input id="r_6_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_3"></div>
+</div>
+</div>
 
-          section.appendChild(row);
-        });
+<div class="card exercise" data-name="Captain's Chair Knee Raise" data-sets="2" data-index="7">
+  <div class="group">Pair 4</div>
+  <div class="name">Captain's Chair Knee Raise</div>
+  <div class="target">Target: Bodyweight — 2 x 12</div>
+  <label>Status</label>
+  <select id="status_7">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_7_1" value="BW"></div>
+  <div><label>Reps</label><input id="r_7_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_7_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_7_2" value="BW"></div>
+  <div><label>Reps</label><input id="r_7_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_7_2"></div>
+</div>
+</div>
 
-        workout.appendChild(section);
-      });
+<div class="card exercise" data-name="Upright Cable Row" data-sets="3" data-index="8">
+  <div class="group">Finish</div>
+  <div class="name">Upright Cable Row</div>
+  <div class="target">Target: 20 lb — 3 x 12</div>
+  <label>Status</label>
+  <select id="status_8">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_8_1" value="20"></div>
+  <div><label>Reps</label><input id="r_8_1" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_8_2" value="20"></div>
+  <div><label>Reps</label><input id="r_8_2" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_2"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 3 weight</label><input id="w_8_3" value="20"></div>
+  <div><label>Reps</label><input id="r_8_3" value="12"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_3"></div>
+</div>
+</div>
 
-      notes.value = state.notes;
-      renderOutput();
-    }
+<div class="card exercise" data-name="Bird Dog Hold" data-sets="2" data-index="9">
+  <div class="group">Finish</div>
+  <div class="name">Bird Dog Hold</div>
+  <div class="target">Target: Bodyweight — 2 x 10/side, 5-second hold</div>
+  <label>Status</label>
+  <select id="status_9">
+    <option value="notdone">Not Reached / Not Done</option>
+    <option value="completed">Completed</option>
+    <option value="modified">Modified</option>
+    <option value="skipped">Skipped</option>
+  </select>
+  
+<div class="setrow">
+  <div><label>Set 1 weight</label><input id="w_9_1" value="BW"></div>
+  <div><label>Reps</label><input id="r_9_1" value="10/side"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_9_1"></div>
+</div>
+<div class="setrow">
+  <div><label>Set 2 weight</label><input id="w_9_2" value="BW"></div>
+  <div><label>Reps</label><input id="r_9_2" value="10/side"></div>
+  <div><label>Done</label><br><input class="check" type="checkbox" id="d_9_2"></div>
+</div>
+</div>
 
-    function renderOutput() {
-      const lines = [`Workout Log - ${today}`, ""];
-      exercises.forEach((name, exerciseIndex) => {
-        lines.push(name);
-        state.sets[exerciseIndex].forEach((set, setIndex) => {
-          const status = set.done ? "✓" : "not done";
-          lines.push(`  Set ${setIndex + 1}: ${set.weight || "BW"} × ${set.reps || "?"} ${status}`);
-        });
-        lines.push("");
-      });
-      if (notes.value.trim()) {
-        lines.push("Notes");
-        lines.push(notes.value.trim());
-      }
-      output.textContent = lines.join("\n").trim();
-    }
 
-    notes.addEventListener("input", save);
-    document.querySelector("#resetToday").addEventListener("click", () => {
-      state = structuredClone(defaultState);
-      notes.value = "";
-      save();
-      render();
-    });
-    document.querySelector("#copyLog").addEventListener("click", async () => {
-      await navigator.clipboard.writeText(output.textContent);
-    });
+<div class="card">
+<div class="name">Notes</div>
+<textarea id="notes" placeholder="Ran out of time, felt hard/easy, discomfort, etc."></textarea>
+</div>
 
-    render();
-  </script>
+<div class="card">
+<div class="name">Summary to paste here</div>
+<div id="output">Tap Create Summary after your workout.</div>
+</div>
+
+<script>
+document.getElementById("date").value = new Date().toISOString().slice(0,10);
+
+function statusName(x) {
+ if(x=="completed") return "Completed";
+ if(x=="modified") return "Modified";
+ if(x=="skipped") return "Skipped";
+ return "Not Reached / Not Done";
+}
+
+function makeSummary() {
+ var date = document.getElementById("date").value;
+ var txt = "Workout Log - " + date + "\n\n";
+ var cards = document.getElementsByClassName("exercise");
+ for(var c=0; c<cards.length; c++) {
+   var index = cards[c].getAttribute("data-index");
+   var name = cards[c].getAttribute("data-name");
+   var sets = parseInt(cards[c].getAttribute("data-sets"),10);
+   var status = document.getElementById("status_"+index).value;
+   txt += name + " - " + statusName(status) + "\n";
+   for(var s=1; s<=sets; s++) {
+     var w = document.getElementById("w_"+index+"_"+s).value;
+     var r = document.getElementById("r_"+index+"_"+s).value;
+     var d = document.getElementById("d_"+index+"_"+s).checked;
+     txt += "  Set " + s + ": " + w + " x " + r + (d ? " done" : " - not done") + "\n";
+   }
+   txt += "\n";
+ }
+ txt += "Notes: " + document.getElementById("notes").value;
+ document.getElementById("output").textContent = txt;
+ saveData(false);
+}
+
+function key() { return "workout_static_" + document.getElementById("date").value; }
+
+function saveData(showAlert) {
+ var data = {};
+ data.notes = document.getElementById("notes").value;
+ data.output = document.getElementById("output").textContent;
+ var cards = document.getElementsByClassName("exercise");
+ data.entries = [];
+ for(var c=0; c<cards.length; c++) {
+   var index = cards[c].getAttribute("data-index");
+   var sets = parseInt(cards[c].getAttribute("data-sets"),10);
+   var entry = {status:document.getElementById("status_"+index).value, sets:[]};
+   for(var s=1; s<=sets; s++) {
+     entry.sets.push({
+       w:document.getElementById("w_"+index+"_"+s).value,
+       r:document.getElementById("r_"+index+"_"+s).value,
+       d:document.getElementById("d_"+index+"_"+s).checked
+     });
+   }
+   data.entries.push(entry);
+ }
+ try {
+   localStorage.setItem(key(), JSON.stringify(data));
+   if(showAlert !== false) alert("Saved.");
+ } catch(e) {
+   if(showAlert !== false) alert("Save failed, but the summary still works.");
+ }
+}
+
+function loadData() {
+ try {
+   var raw = localStorage.getItem(key());
+   if(!raw) return;
+   var data = JSON.parse(raw);
+   document.getElementById("notes").value = data.notes || "";
+   document.getElementById("output").textContent = data.output || "Tap Create Summary after your workout.";
+   var cards = document.getElementsByClassName("exercise");
+   for(var c=0; c<data.entries.length; c++) {
+     var index = cards[c].getAttribute("data-index");
+     var sets = data.entries[c].sets;
+     document.getElementById("status_"+index).value = data.entries[c].status || "notdone";
+     for(var j=0; j<sets.length; j++) {
+       var s = j+1;
+       document.getElementById("w_"+index+"_"+s).value = sets[j].w;
+       document.getElementById("r_"+index+"_"+s).value = sets[j].r;
+       document.getElementById("d_"+index+"_"+s).checked = sets[j].d;
+     }
+   }
+ } catch(e) {}
+}
+
+function copySummary() {
+ makeSummary();
+ var txt = document.getElementById("output").textContent;
+ if(navigator.clipboard && navigator.clipboard.writeText) {
+   navigator.clipboard.writeText(txt).then(function(){alert("Copied.");}, function(){alert("Copy failed. Press and hold the summary to copy manually.");});
+ } else {
+   alert("Press and hold the summary to copy manually.");
+ }
+}
+
+function clearData() {
+ if(confirm("Clear this workout date?")) {
+   try { localStorage.removeItem(key()); } catch(e) {}
+   location.reload();
+ }
+}
+
+document.getElementById("date").addEventListener("change", loadData);
+loadData();
+</script>
+
+</main>
 </body>
 </html>
