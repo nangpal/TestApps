@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Golf OS v2.2</title>
+<title>Golf OS v2.4</title>
 <style>
 :root{--bg:#0f172a;--card:#111827;--muted:#94a3b8;--text:#f8fafc;--accent:#38bdf8;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#334155}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#020617,#0f172a);color:var(--text);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
@@ -16,7 +16,7 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
 </style>
 </head>
 <body><div class="app">
-<div class="top"><h1>Golf OS v2.2</h1><div class="sub" id="status">Setup round</div></div>
+<div class="top"><h1>Golf OS v2.4</h1><div class="sub" id="status">Setup round</div></div>
 
 <section id="setup" class="card">
  <div class="stepTitle">Start Round</div>
@@ -63,6 +63,7 @@ const courses={
  "Neshanic Academy (9)":{note:"Placeholder scorecard: confirm exact hole yardages at course.",tees:{Back:[250,145,285,160,310,170,300,150,249],Middle:[210,125,250,140,275,150,260,130,230],Forward:[170,105,210,120,235,130,220,110,200]},par:[4,3,4,3,4,3,4,3,4]},
  "Green Knoll":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[500,340,375,160,390,175,410,150,360,370,155,420,340,500,180,390,360,380]},par:[5,4,4,3,4,3,4,3,4,4,3,4,4,5,3,4,4,4]},
  "Quail Brook":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[520,380,165,405,390,520,175,360,410,395,150,535,370,420,180,400,365,550]},par:[5,4,3,4,4,5,3,4,4,4,3,5,4,4,3,4,4,5]},
+ "DLF Golf & Country Club (Gary Player)":{note:"Published scorecard yardages; verify the tee markers in use on the day.",tees:{Black:[367,443,178,431,486,538,407,171,607,405,182,485,483,565,368,187,358,515],Blue:[335,424,150,405,478,525,384,143,547,379,163,447,464,528,340,169,338,496],White:[316,404,136,386,443,503,365,122,531,345,137,418,448,496,324,144,319,468],Red:[295,366,121,367,437,476,342,112,513,304,123,363,426,472,303,124,304,430],Yellow:[268,306,111,336,428,454,303,100,495,280,102,328,405,428,278,110,293,376]},par:[4,4,3,4,4,5,4,3,5,4,3,4,4,5,4,3,4,5],hcp:[11,3,15,5,1,13,7,17,9,14,12,4,2,6,8,18,10,16]},
  "Blank 18":{tees:{Default:Array(18).fill(0)},par:Array(18).fill(4)},
  "Blank 9":{tees:{Default:Array(9).fill(0)},par:Array(9).fill(4)}
 };
@@ -96,9 +97,9 @@ function nextHole(){if(!round)return; if(holeIdx<round.holes.length-1){holeIdx++
 function prevHole(){if(!round)return; if(holeIdx>0){holeIdx--;renderHole()}}
 function endRoundNow(){ if(!round)return; if(confirm('End this round now and go to review?')) showReview();}
 function showReview(){ $('play').classList.add('hidden');$('footer').classList.add('hidden');$('review').classList.remove('hidden'); const played=round.holes.filter(h=>h.shots.length>0); const shots=played.flatMap(h=>h.shots.map(s=>({...s,hole:h.hole,par:h.par}))); const score=shots.length-played.reduce((a,h)=>a+h.par,0); const putts=shots.filter(s=>s.type==='Putt').length; const poor=shots.filter(s=>s.quality==='Poor'); const imperfect=shots.filter(s=>s.quality==='Poor'||s.quality==='OK'); const inside100=shots.filter(s=>s.distance&&Number(s.distance)<=100&&s.type!=='Putt'); const in150=shots.filter(s=>s.distance&&Number(s.distance)<=150&&s.type!=='Putt'); const clubs={}; shots.forEach(s=>clubs[s.club]=(clubs[s.club]||0)+1); $('roundSummary').innerHTML=`<p><strong>${round.course}</strong> • ${round.tee} • ${played.length} holes played • Score vs par played: <strong>${score>=0?'+'+score:score}</strong></p><p>Shots: ${shots.length} • Putts: ${putts} • OK/Poor shots: ${imperfect.length} • Poor shots: ${poor.length}</p><p>Inside 100: ${inside100.length} shots • 150 and in: ${in150.length} shots</p><p>Top clubs: ${Object.entries(clubs).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(', ')}</p><p>Top failures: ${Object.entries(imperfect.reduce((a,s)=>{a[s.failure||'Unknown']=(a[s.failure||'Unknown']||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p><p>Top drivers: ${Object.entries(imperfect.reduce((a,s)=>{if(s.driver&&s.driver!=='None / not sure')a[s.driver]=(a[s.driver]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p>`; save();}
-function save(){localStorage.setItem('golfOSv22',JSON.stringify(round))}
-function loadSaved(){const x=localStorage.getItem('golfOSv22'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
-function newRound(){localStorage.removeItem('golfOSv22'); location.reload()}
+function save(){localStorage.setItem('golfOSv24',JSON.stringify(round))}
+function loadSaved(){const x=localStorage.getItem('golfOSv24'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
+function newRound(){localStorage.removeItem('golfOSv24'); location.reload()}
 function getJSON(){return JSON.stringify(round,null,2)}
 function downloadJSON(){const b=new Blob([getJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`golf_round_${round.course}_${round.date.slice(0,10)}.json`; a.click();}
 async function copyJSON(){try{await navigator.clipboard.writeText(getJSON()); alert('Copied JSON to clipboard.')}catch(e){alert('Copy failed. Use Download Round JSON.')}}
