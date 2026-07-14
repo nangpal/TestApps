@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Golf OS v3.0</title>
+<style>
+:root{--bg:#0f172a;--card:#111827;--muted:#94a3b8;--text:#f8fafc;--accent:#38bdf8;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#334155}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#020617,#0f172a);color:var(--text);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+.app{max-width:520px;margin:0 auto;padding:12px 0 90px}.top{position:sticky;top:0;z-index:5;background:rgba(15,23,42,.94);backdrop-filter:blur(10px);padding:10px 0;border-bottom:1px solid var(--line)}
+h1{font-size:20px;margin:0 0 6px}.sub{color:var(--muted);font-size:13px}.card{background:rgba(17,24,39,.92);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 10px 25px rgba(0,0,0,.22)}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}.pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-size:13px;margin:3px 4px 3px 0}.pill strong{color:var(--text)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px} select,input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#020617;color:var(--text);font-size:16px}textarea{min-height:64px;resize:vertical}
+button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:700;color:#06111f;background:var(--accent);width:100%;margin:6px 0}button.secondary{background:#1e293b;color:var(--text);border:1px solid var(--line)}button.good{background:var(--good)}button.warn{background:var(--warn)}button.bad{background:var(--bad);color:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.choice{background:#020617;color:var(--text);border:1px solid var(--line);width:auto;margin:0;padding:9px 12px;font-size:14px;font-weight:600;border-radius:11px}
+.choice.active{outline:2px solid var(--accent);background:#082f49}.choice.good.active{outline-color:var(--good);background:#052e1a}.choice.bad.active{outline-color:var(--bad);background:#2d0a0a}
+.hidden{display:none!important}.stepTitle{font-size:16px;font-weight:800;margin:2px 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.big{font-size:30px;font-weight:900}.muted{color:var(--muted)}.summary{font-size:14px;line-height:1.5}
+.stepper{display:flex;align-items:center;gap:10px;background:#020617;border:1px solid var(--line);border-radius:14px;padding:8px}
+.stepper button{width:46px;flex:none;margin:0;font-size:22px;padding:8px 0;border-radius:10px}
+.stepper .val{flex:1;text-align:center;font-size:26px;font-weight:900}
+.section{margin:14px 0}
+.footer{position:fixed;left:0;right:0;bottom:0;background:rgba(2,6,23,.95);border-top:1px solid var(--line);padding:8px 12px env(safe-area-inset-bottom);}.footer .inner{max-width:520px;margin:0 auto;display:flex;gap:8px}.footer button{margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}th{color:var(--muted);font-weight:600}
+.ok{color:var(--good)}.warnText{color:var(--warn)}.badText{color:var(--bad)}
+</style>
+</head>
+<body><div class="app">
+<div class="top"><h1>Golf OS v3.0</h1><div class="sub" id="status">Setup round</div></div>
+
+<section id="setup" class="card">
+ <div class="stepTitle">Start Round</div>
+ <div class="row"><div><label>Course</label><select id="course"></select></div><div><label>Tee</label><select id="tee"></select></div></div>
+ <div class="row"><div><label>Round Goal</label><select id="goal"><option>Break 90</option><option>Break 85</option><option>No doubles</option><option>Learning round</option></select></div><div><label>Today's swing cue</label><select id="cue"><option>Lead heel → club behind me</option><option>Soft hands</option><option>Complete backswing / wait</option><option>Centered turn</option><option>5W day</option></select></div></div>
+ <button onclick="startRound()">Start Round</button>
+ <button class="secondary" onclick="loadSaved()">Load Saved Round</button>
+</section>
+
+<section id="play" class="hidden">
+ <div class="card">
+  <div class="row"><div><div class="muted">Hole</div><div class="big" id="holeNum">1</div></div><div><div class="muted">Par / Yds</div><div class="big" id="holeParYds">4 / 0</div></div><div><div class="muted">Score thru</div><div class="big" id="scoreSoFar">E</div></div></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Score</div>
+  <div class="stepper"><button onclick="adjust('score',-1)">−</button><div class="val" id="scoreVal">4</div><button onclick="adjust('score',1)">+</button></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Putts</div>
+  <div class="stepper"><button onclick="adjust('putts',-1)">−</button><div class="val" id="puttsVal">2</div><button onclick="adjust('putts',1)">+</button></div>
+ </div>
+
+ <div class="card" id="firCard">
+  <div class="stepTitle">Fairway Hit</div>
+  <div class="grid"><button class="choice good" id="firHit" onclick="setBool('fir',true)">Hit</button><button class="choice bad" id="firMiss" onclick="setBool('fir',false)">Missed</button></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Green In Regulation</div>
+  <div class="grid"><button class="choice good" id="girHit" onclick="setBool('gir',true)">Hit</button><button class="choice bad" id="girMiss" onclick="setBool('gir',false)">Missed</button></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Strokes from 120 yds</div>
+  <div class="stepper"><button onclick="adjustNA('strokes120',-1,1)">−</button><div class="val" id="strokes120Val">N/A</div><button onclick="adjustNA('strokes120',1,1)">+</button></div>
+  <button class="secondary" onclick="clearField('strokes120')">Mark N/A (never inside 120)</button>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Par Putt Length (ft)</div>
+  <div class="stepper"><button onclick="adjustNA('parPuttLen',-1,3)">−</button><div class="val" id="parPuttLenVal">N/A</div><button onclick="adjustNA('parPuttLen',1,3)">+</button></div>
+  <div class="grid"><button class="secondary" onclick="adjustNA('parPuttLen',-5,3)">−5</button><button class="secondary" onclick="adjustNA('parPuttLen',5,3)">+5</button></div>
+  <button class="secondary" onclick="clearField('parPuttLen')">Mark N/A (no par putt)</button>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Miss / Failure Tags (tap all that applied)</div>
+  <div class="wrap" id="failureWrap"></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Likely Cause (optional)</div>
+  <div class="wrap" id="driverWrap"></div>
+ </div>
+
+ <div class="card">
+  <div class="stepTitle">Note</div>
+  <textarea id="noteInput" oninput="setNote(this.value)" placeholder="e.g. 5W was right play off tee; 52° felt uncomfortable"></textarea>
+ </div>
+
+ <button class="bad" onclick="endRoundNow()">End Round Now</button>
+</section>
+
+<section id="review" class="hidden card">
+ <div class="stepTitle">Round Review</div>
+ <div id="roundSummary" class="summary"></div>
+ <button onclick="downloadJSON()">Download Round JSON</button>
+ <button class="secondary" onclick="copyJSON()">Copy JSON</button>
+ <button class="secondary" onclick="newRound()">New Round</button>
+</section>
+</div>
+
+<div id="footer" class="footer hidden"><div class="inner"><button class="secondary" onclick="prevHole()">← Hole</button><button onclick="nextHole()">Hole →</button></div></div>
+
+<script>
+const courses={
+ "The Architects Golf Club":{tees:{Black:[509,195,521,440,355,145,412,187,447,375,544,191,524,482,473,463,200,400],Gold:[500,185,510,422,345,135,400,174,410,358,523,182,494,454,432,443,180,385],Blue:[485,165,497,405,335,116,375,163,395,348,500,159,475,400,405,423,171,355],Red:[404,122,414,350,283,100,331,110,337,291,437,138,407,354,352,350,142,311]},par:[5,3,5,4,4,3,4,3,4,4,5,3,5,4,4,4,3,4],hcp:[15,9,5,7,13,17,3,11,1,14,10,16,6,4,2,8,18,12]},
+ "Spooky Brook":{tees:{Gold:[485,419,153,446,539,404,357,196,374,362,187,373,527,410,366,165,382,510],Blue:[470,394,136,415,512,378,339,173,351,342,168,350,500,385,344,145,360,485]},par:[5,4,3,4,5,4,4,3,4,4,3,4,5,4,4,3,4,5]},
+ "Peddie":{tees:{White:[523,352,115,380,121,381,492,350,413,385,307,560,170,485,360,157,177,550]},par:[5,4,3,4,3,4,5,4,4,4,4,5,3,5,4,3,3,5]},
+ "Neshanic Academy (9)":{note:"Placeholder scorecard: confirm exact hole yardages at course.",tees:{Back:[250,145,285,160,310,170,300,150,249],Middle:[210,125,250,140,275,150,260,130,230],Forward:[170,105,210,120,235,130,220,110,200]},par:[4,3,4,3,4,3,4,3,4]},
+ "Green Knoll":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[500,340,375,160,390,175,410,150,360,370,155,420,340,500,180,390,360,380]},par:[5,4,4,3,4,3,4,3,4,4,3,4,4,5,3,4,4,4]},
+ "Quail Brook":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[520,380,165,405,390,520,175,360,410,395,150,535,370,420,180,400,365,550]},par:[5,4,3,4,4,5,3,4,4,4,3,5,4,4,3,4,4,5]},
+ "DLF Golf & Country Club (Gary Player)":{note:"Published scorecard yardages; verify the tee markers in use on the day.",tees:{Black:[367,443,178,431,486,538,407,171,607,405,182,485,483,565,368,187,358,515],Blue:[335,424,150,405,478,525,384,143,547,379,163,447,464,528,340,169,338,496],White:[316,404,136,386,443,503,365,122,531,345,137,418,448,496,324,144,319,468],Red:[295,366,121,367,437,476,342,112,513,304,123,363,426,472,303,124,304,430],Yellow:[268,306,111,336,428,454,303,100,495,280,102,328,405,428,278,110,293,376]},par:[4,4,3,4,4,5,4,3,5,4,3,4,4,5,4,3,4,5],hcp:[11,3,15,5,1,13,7,17,9,14,12,4,2,6,8,18,10,16]},
+ "Blank 18":{tees:{Default:Array(18).fill(0)},par:Array(18).fill(4)},
+ "Blank 9":{tees:{Default:Array(9).fill(0)},par:Array(9).fill(4)}
+};
+const failureTags=['Fat','Thin','Push','Pull','Hook','Slice','Heel','Toe','Short','Long','3-Putt','Bad decision','Rushed','No commitment','Other'];
+const driverTags=['Pressure not to lead heel','Tempo rushed','Hands took over','Face closed fast','Pelvis drifted','Ball position','Bad target/club','Wind/lie misread','Nerves','Other'];
+let round=null, holeIdx=0;
+function $(id){return document.getElementById(id)}
+function init(){fillSelect('course',Object.keys(courses)); onCourseChange(); $('course').addEventListener('change',onCourseChange);}
+function fillSelect(id,arr){$(id).innerHTML=arr.map(x=>`<option value="${x}">${x}</option>`).join('')}
+function onCourseChange(){fillSelect('tee',Object.keys(courses[$('course').value].tees))}
+function startRound(){
+ const c=$('course').value,t=$('tee').value; const course=courses[c];
+ round={date:new Date().toISOString(),course:c,tee:t,goal:$('goal').value,cue:$('cue').value,courseNote:course.note||'',
+  holes:course.par.map((p,i)=>({hole:i+1,par:p,yards:course.tees[t][i],score:p,putts:2,fir:null,gir:null,strokes120:null,parPuttLen:null,failures:[],drivers:[],note:''}))};
+ holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden'); renderHole(); save();
+}
+function renderHole(){
+ const h=round.holes[holeIdx];
+ $('status').textContent=`${round.course} • ${round.tee} • ${round.goal}${round.courseNote?' • check yardages':''}`;
+ $('holeNum').textContent=h.hole; $('holeParYds').textContent=`${h.par} / ${h.yards||'—'}`;
+ const playedThru=round.holes.slice(0,holeIdx+1); const score=playedThru.reduce((a,x)=>a+x.score,0)-playedThru.reduce((a,x)=>a+x.par,0);
+ $('scoreSoFar').textContent=score===0?'E':score>0?'+'+score:String(score);
+ $('scoreVal').textContent=h.score; $('puttsVal').textContent=h.putts;
+ $('firCard').classList.toggle('hidden',h.par===3);
+ $('firHit').classList.toggle('active',h.fir===true); $('firMiss').classList.toggle('active',h.fir===false);
+ $('girHit').classList.toggle('active',h.gir===true); $('girMiss').classList.toggle('active',h.gir===false);
+ $('strokes120Val').textContent=h.strokes120===null?'N/A':h.strokes120;
+ $('parPuttLenVal').textContent=h.parPuttLen===null?'N/A':h.parPuttLen+' ft';
+ $('failureWrap').innerHTML=failureTags.map(f=>`<button class="choice bad ${h.failures.includes(f)?'active':''}" onclick="toggleTag('failures','${f}')">${f}</button>`).join('');
+ $('driverWrap').innerHTML=driverTags.map(d=>`<button class="choice ${h.drivers.includes(d)?'active':''}" onclick="toggleTag('drivers','${d}')">${d}</button>`).join('');
+ $('noteInput').value=h.note||'';
+}
+function adjust(field,delta){const h=round.holes[holeIdx]; const min=field==='putts'?0:1; h[field]=Math.max(min,h[field]+delta); save(); renderHole();}
+function setBool(field,val){const h=round.holes[holeIdx]; h[field]=(h[field]===val)?null:val; save(); renderHole();}
+function adjustNA(field,delta,initial){const h=round.holes[holeIdx]; if(h[field]===null){ if(delta>0) h[field]=initial; } else { const nv=h[field]+delta; h[field]=nv<1?null:nv; } save(); renderHole();}
+function clearField(field){round.holes[holeIdx][field]=null; save(); renderHole();}
+function toggleTag(field,tag){const h=round.holes[holeIdx]; const i=h[field].indexOf(tag); if(i>-1)h[field].splice(i,1); else h[field].push(tag); save(); renderHole();}
+function setNote(v){round.holes[holeIdx].note=v; save();}
+function nextHole(){if(!round)return; if(holeIdx<round.holes.length-1){holeIdx++;renderHole()}else showReview()}
+function prevHole(){if(!round)return; if(holeIdx>0){holeIdx--;renderHole()}}
+function endRoundNow(){if(!round)return; if(confirm('End this round now and go to review?')) showReview();}
+function showReview(){
+ $('play').classList.add('hidden');$('footer').classList.add('hidden');$('review').classList.remove('hidden');
+ const holes=round.holes;
+ const totalScore=holes.reduce((a,h)=>a+h.score,0), totalPar=holes.reduce((a,h)=>a+h.par,0), diff=totalScore-totalPar;
+ const putts=holes.reduce((a,h)=>a+h.putts,0);
+ const firApplicable=holes.filter(h=>h.par!==3 && h.fir!==null); const firHits=firApplicable.filter(h=>h.fir===true).length;
+ const girApplicable=holes.filter(h=>h.gir!==null); const girHits=girApplicable.filter(h=>h.gir===true).length;
+ const s120=holes.filter(h=>h.strokes120!==null); const s120Avg=s120.length?(s120.reduce((a,h)=>a+h.strokes120,0)/s120.length).toFixed(2):null;
+ const puttsRecorded=holes.filter(h=>h.parPuttLen!==null); const puttsMade=puttsRecorded.filter(h=>h.score<=h.par); const puttsMissed=puttsRecorded.filter(h=>h.score>h.par);
+ const avgLen=arr=>arr.length?(arr.reduce((a,h)=>a+h.parPuttLen,0)/arr.length).toFixed(1):null;
+ const failureCounts={}; holes.forEach(h=>h.failures.forEach(f=>failureCounts[f]=(failureCounts[f]||0)+1));
+ const driverCounts={}; holes.forEach(h=>h.drivers.forEach(d=>driverCounts[d]=(driverCounts[d]||0)+1));
+ const rows=holes.map(h=>`<tr><td>${h.hole}</td><td>${h.par}</td><td>${h.score>h.par?'+'+(h.score-h.par):h.score<h.par?(h.score-h.par):'E'}</td><td>${h.putts}</td><td>${h.par===3?'—':h.fir===true?'✓':h.fir===false?'✗':'—'}</td><td>${h.gir===true?'✓':h.gir===false?'✗':'—'}</td><td>${h.strokes120===null?'—':h.strokes120}</td><td>${h.parPuttLen===null?'—':h.parPuttLen+'ft'}</td><td style="text-align:left">${h.failures.join(', ')||''}</td></tr>`).join('');
+ $('roundSummary').innerHTML=`
+  <p><strong>${round.course}</strong> • ${round.tee} • ${holes.length} holes • Score vs par: <strong>${diff>=0?'+'+diff:diff}</strong> (${totalScore})</p>
+  <p>Putts: ${putts} (avg ${(putts/holes.length).toFixed(1)}/hole) • FIR: ${firApplicable.length?firHits+'/'+firApplicable.length+' ('+Math.round(100*firHits/firApplicable.length)+'%)':'not recorded'} • GIR: ${girApplicable.length?girHits+'/'+girApplicable.length+' ('+Math.round(100*girHits/girApplicable.length)+'%)':'not recorded'}</p>
+  <p>Strokes from 120yd: ${s120.length?'avg '+s120Avg+' ('+s120.length+' holes)':'not recorded'}</p>
+  <p>Par putt length: ${puttsRecorded.length?'made avg '+(avgLen(puttsMade)||'—')+'ft ('+puttsMade.length+'), missed avg '+(avgLen(puttsMissed)||'—')+'ft ('+puttsMissed.length+')':'not recorded'}</p>
+  <p>Top miss tags: ${Object.entries(failureCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p>
+  <p>Top likely causes: ${Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(', ')||'None'}</p>
+  <table><tr><th>H</th><th>Par</th><th>Score</th><th>Putts</th><th>FIR</th><th>GIR</th><th>120yd</th><th>ParPutt</th><th style="text-align:left">Miss tags</th></tr>${rows}</table>`;
+ save();
+}
+function save(){localStorage.setItem('golfOSv3_1',JSON.stringify(round))}
+function loadSaved(){const x=localStorage.getItem('golfOSv3_1'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
+function newRound(){localStorage.removeItem('golfOSv3_1'); location.reload()}
+function getJSON(){return JSON.stringify(round,null,2)}
+function downloadJSON(){const b=new Blob([getJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`golf_round_${round.course}_${round.date.slice(0,10)}.json`; a.click();}
+async function copyJSON(){try{await navigator.clipboard.writeText(getJSON()); alert('Copied JSON to clipboard.')}catch(e){alert('Copy failed. Use Download Round JSON.')}}
+init();
+</script></body></html>
