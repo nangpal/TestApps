@@ -23,6 +23,10 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
 .footer{position:fixed;left:0;right:0;bottom:0;background:rgba(2,6,23,.95);border-top:1px solid var(--line);padding:8px 12px env(safe-area-inset-bottom);}.footer .inner{max-width:520px;margin:0 auto;display:flex;gap:8px}.footer button{margin:0}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}th{color:var(--muted);font-weight:600}
 .ok{color:var(--good)}.warnText{color:var(--warn)}.badText{color:var(--bad)}
+.overlay{position:fixed;inset:0;background:rgba(2,6,23,.75);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:380px;width:100%}
+.modal p{margin:0 0 14px;font-size:15px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#111827;border:1px solid var(--line);padding:10px 16px;border-radius:12px;z-index:40;font-size:14px;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.35)}
 </style>
 </head>
 <body><div class="app">
@@ -103,6 +107,14 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;b
 
 <div id="footer" class="footer hidden"><div class="inner"><button class="secondary" onclick="prevHole()">← Hole</button><button onclick="nextHole()">Hole →</button></div></div>
 
+<div id="confirmOverlay" class="overlay hidden">
+ <div class="modal">
+  <p id="confirmMsg">Are you sure?</p>
+  <div class="grid"><button class="secondary" onclick="confirmNo()">Cancel</button><button class="bad" onclick="confirmYes()">Yes, end round</button></div>
+ </div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
 <script>
 const courses={
  "The Architects Golf Club":{tees:{Black:[509,195,521,440,355,145,412,187,447,375,544,191,524,482,473,463,200,400],Gold:[500,185,510,422,345,135,400,174,410,358,523,182,494,454,432,443,180,385],Blue:[485,165,497,405,335,116,375,163,395,348,500,159,475,400,405,423,171,355],Red:[404,122,414,350,283,100,331,110,337,291,437,138,407,354,352,350,142,311]},par:[5,3,5,4,4,3,4,3,4,4,5,3,5,4,4,4,3,4],hcp:[15,9,5,7,13,17,3,11,1,14,10,16,6,4,2,8,18,12]},
@@ -112,6 +124,7 @@ const courses={
  "Green Knoll":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[500,340,375,160,390,175,410,150,360,370,155,420,340,500,180,390,360,380]},par:[5,4,4,3,4,3,4,3,4,4,3,4,4,5,3,4,4,4]},
  "Quail Brook":{note:"Course added. Hole yardages are placeholders until official scorecard details are entered.",tees:{Default:[520,380,165,405,390,520,175,360,410,395,150,535,370,420,180,400,365,550]},par:[5,4,3,4,4,5,3,4,4,4,3,5,4,4,3,4,4,5]},
  "DLF Golf & Country Club (Gary Player)":{note:"Published scorecard yardages; verify the tee markers in use on the day.",tees:{Black:[367,443,178,431,486,538,407,171,607,405,182,485,483,565,368,187,358,515],Blue:[335,424,150,405,478,525,384,143,547,379,163,447,464,528,340,169,338,496],White:[316,404,136,386,443,503,365,122,531,345,137,418,448,496,324,144,319,468],Red:[295,366,121,367,437,476,342,112,513,304,123,363,426,472,303,124,304,430],Yellow:[268,306,111,336,428,454,303,100,495,280,102,328,405,428,278,110,293,376]},par:[4,4,3,4,4,5,4,3,5,4,3,4,4,5,4,3,4,5],hcp:[11,3,15,5,1,13,7,17,9,14,12,4,2,6,8,18,10,16]},
+ "Mercer Oaks East":{note:"Sourced from a third-party scorecard aggregator (original PDF is a scanned image); totals cross-checked against official listing (par 72, 7182 yds Black).",tees:{Black:[415,580,360,430,165,465,540,225,412,435,395,192,555,318,455,195,425,620],Blue:[392,550,335,410,148,440,515,208,400,412,365,170,540,304,430,188,390,575],White:[352,525,320,385,130,415,492,185,375,383,343,155,500,291,400,170,360,545],Gold:[335,500,293,380,110,385,482,170,355,366,315,130,485,270,372,143,335,508],Red:[285,415,240,338,85,355,425,135,300,330,280,106,440,238,347,123,300,470]},par:[4,5,4,4,3,4,5,3,4,4,4,3,5,4,4,3,4,5],hcp:[5,11,15,7,17,1,9,13,3,8,16,10,12,18,4,14,2,6]},
  "Blank 18":{tees:{Default:Array(18).fill(0)},par:Array(18).fill(4)},
  "Blank 9":{tees:{Default:Array(9).fill(0)},par:Array(9).fill(4)}
 };
@@ -152,7 +165,12 @@ function toggleTag(field,tag){const h=round.holes[holeIdx]; const i=h[field].ind
 function setNote(v){round.holes[holeIdx].note=v; save();}
 function nextHole(){if(!round)return; if(holeIdx<round.holes.length-1){holeIdx++;renderHole()}else showReview()}
 function prevHole(){if(!round)return; if(holeIdx>0){holeIdx--;renderHole()}}
-function endRoundNow(){if(!round)return; if(confirm('End this round now and go to review?')) showReview();}
+let pendingConfirm=null, toastTimer=null;
+function showConfirm(msg,onYes){$('confirmMsg').textContent=msg; pendingConfirm=onYes; $('confirmOverlay').classList.remove('hidden');}
+function confirmYes(){$('confirmOverlay').classList.add('hidden'); const cb=pendingConfirm; pendingConfirm=null; if(cb)cb();}
+function confirmNo(){$('confirmOverlay').classList.add('hidden'); pendingConfirm=null;}
+function showToast(msg){const t=$('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.add('hidden'),2200);}
+function endRoundNow(){if(!round)return; showConfirm('End this round now and go to review?',showReview);}
 function showReview(){
  $('play').classList.add('hidden');$('footer').classList.add('hidden');$('review').classList.remove('hidden');
  const holes=round.holes;
@@ -181,6 +199,6 @@ function loadSaved(){const x=localStorage.getItem('golfOSv3_1'); if(x){round=JSO
 function newRound(){localStorage.removeItem('golfOSv3_1'); location.reload()}
 function getJSON(){return JSON.stringify(round,null,2)}
 function downloadJSON(){const b=new Blob([getJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`golf_round_${round.course}_${round.date.slice(0,10)}.json`; a.click();}
-async function copyJSON(){try{await navigator.clipboard.writeText(getJSON()); alert('Copied JSON to clipboard.')}catch(e){alert('Copy failed. Use Download Round JSON.')}}
+async function copyJSON(){try{await navigator.clipboard.writeText(getJSON()); showToast('Copied JSON to clipboard.')}catch(e){showToast('Copy failed. Use Download Round JSON.')}}
 init();
 </script></body></html>
