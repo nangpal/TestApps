@@ -1,436 +1,454 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Workout Tracker Static</title>
 <style>
-body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f2f2f2;color:#111}
-header{background:#111;color:white;padding:14px;position:sticky;top:0;z-index:2}
-h1{font-size:20px;margin:0}
-main{padding:10px}
-.card{background:white;border:1px solid #ddd;border-radius:12px;padding:12px;margin:10px 0}
-.group{font-size:12px;color:#666;font-weight:bold;text-transform:uppercase}
-.name{font-size:18px;font-weight:bold;margin:4px 0}
-.target{font-size:13px;color:#555;margin:4px 0 8px}
-label{font-size:12px;color:#555}
-input,select,textarea,button{font-size:16px;border-radius:8px;border:1px solid #bbb;padding:8px;box-sizing:border-box}
-input,select,textarea{width:100%}
-button{background:#111;color:white;border:0;font-weight:bold;margin:4px 2px;padding:10px}
-button.gray{background:#e8e8e8;color:#111}
-.setrow{display:grid;grid-template-columns:1fr 1fr 70px;gap:6px;align-items:end;margin:8px 0}
-.check{width:auto;transform:scale(1.4)}
-textarea{min-height:80px}
-#output{white-space:pre-wrap;background:white;border:1px solid #bbb;border-radius:10px;padding:10px;min-height:120px;font-family:Arial,Helvetica,sans-serif}
-.small{font-size:12px;color:#666}
+:root {
+ --bg:#0f172a; --card:#111827; --panel:#020617; --line:#334155;
+ --text:#f8fafc; --muted:#94a3b8; --accent:#38bdf8; --green:#22c55e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:#020617;border-bottom:1px solid var(--line);
+padding:12px env(safe-area-inset-right) 12px env(safe-area-inset-left)}
+.header-inner,main{width:min(100%,620px);margin:auto;padding-left:12px;padding-right:12px}
+h1{font-size:20px;margin:0 0 5px} .sub{font-size:12px;color:var(--muted)}
+main{padding-top:12px;padding-bottom:90px}
+.toolbar{display:grid;grid-template-columns:1.25fr repeat(4,1fr);gap:7px;align-items:end}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}
+.pair{font-size:12px;color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.04em}
+h2{font-size:18px;margin:4px 0} .target{font-size:13px;color:var(--muted);margin-bottom:12px}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+input,select,textarea,button{width:100%;font:inherit;border-radius:10px;border:1px solid var(--line);
+background:var(--panel);color:var(--text);padding:10px}
+button{background:#1e293b;font-weight:750;cursor:pointer}
+button.primary{background:var(--accent);color:#04121d;border:0}
+.set-row{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,1fr) 48px;
+gap:8px;align-items:end;margin-top:10px}
+.set-label{font-size:13px;color:var(--muted);padding-bottom:11px}
+.check-wrap{display:flex;flex-direction:column;align-items:center;margin:0}
+.check-wrap input{width:27px;height:27px;padding:0;accent-color:var(--green)}
+textarea{min-height:110px;resize:vertical} #summary{min-height:220px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(2,6,23,.97);
+border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+.bottom-inner{width:min(100%,620px);margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){
+ .toolbar{grid-template-columns:1fr 1fr} .toolbar .date-field{grid-column:1/-1}
+ .set-row{grid-template-columns:42px minmax(0,1fr) minmax(0,1fr) 42px;gap:6px}
+ input,select,textarea,button{padding:10px 7px}
+}
 </style>
 </head>
 <body>
-<header><h1>Workout Tracker Static</h1></header>
+<header><div class="header-inner">
+<h1>Workout Tracker Static</h1>
+<div class="sub">Hardcoded workout. Unchecked sets export as not done. Updated July 18, 2026.</div>
+</div></header>
 <main>
+<section class="card">
+ <div class="toolbar">
+  <div class="date-field"><label>Date</label><input type="date" id="workoutDate"></div>
+  <button onclick="createSummary()">Create Summary</button>
+  <button onclick="copySummary()">Copy Summary</button>
+  <button onclick="saveWorkout()">Save</button>
+  <button onclick="clearWorkout()">Clear</button>
+ </div>
+</section>
 
-<div class="card">
-<label>Date</label>
-<input id="date" type="date">
-<p class="small">This version has all exercises hardcoded. Rule: unchecked sets export as not done.</p>
-<button onclick="makeSummary()">Create Summary</button>
-<button class="gray" onclick="copySummary()">Copy Summary</button>
-<button class="gray" onclick="saveData()">Save</button>
-<button class="gray" onclick="clearData()">Clear</button>
-</div>
-
-
-<div class="card exercise" data-name="One-arm Cable Chest Press with Rotation" data-sets="3" data-index="0">
-  <div class="group">Pair 1</div>
-  <div class="name">One-arm Cable Chest Press with Rotation</div>
-  <div class="target">Target: 12 lb — 3 x 12/side</div>
-  <label>Status</label>
-  <select id="status_0">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_0_1" value="12"></div>
-  <div><label>Reps</label><input id="r_0_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_0_2" value="12"></div>
-  <div><label>Reps</label><input id="r_0_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_0_3" value="12"></div>
-  <div><label>Reps</label><input id="r_0_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_0_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Cable Deadlift" data-sets="3" data-index="1">
-  <div class="group">Pair 1</div>
-  <div class="name">Cable Deadlift</div>
-  <div class="target">Target: 15 lb/side — 3 x 12; confirm if this should be 30 lb/side</div>
-  <label>Status</label>
-  <select id="status_1">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_1_1" value="15/side"></div>
-  <div><label>Reps</label><input id="r_1_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_1_2" value="15/side"></div>
-  <div><label>Reps</label><input id="r_1_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_1_3" value="15/side"></div>
-  <div><label>Reps</label><input id="r_1_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_1_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Standing Lat Pulldown" data-sets="3" data-index="2">
-  <div class="group">Pair 2</div>
-  <div class="name">Standing Lat Pulldown</div>
-  <div class="target">Target: 30 lb/side — 3 x 12</div>
-  <label>Status</label>
-  <select id="status_2">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_2_1" value="30/side"></div>
-  <div><label>Reps</label><input id="r_2_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_2_2" value="30/side"></div>
-  <div><label>Reps</label><input id="r_2_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_2_3" value="30/side"></div>
-  <div><label>Reps</label><input id="r_2_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_2_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Get-ups from Low Step" data-sets="3" data-index="3">
-  <div class="group">Pair 2</div>
-  <div class="name">Get-ups from Low Step</div>
-  <div class="target">Target: Bodyweight — 3 x 12</div>
-  <label>Status</label>
-  <select id="status_3">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_3_1" value="BW"></div>
-  <div><label>Reps</label><input id="r_3_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_3_2" value="BW"></div>
-  <div><label>Reps</label><input id="r_3_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_3_3" value="BW"></div>
-  <div><label>Reps</label><input id="r_3_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_3_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Assisted Pull-up" data-sets="3" data-index="4">
-  <div class="group">Pair 3</div>
-  <div class="name">Assisted Pull-up</div>
-  <div class="target">Target: 110 lb assistance — 3 x 8-10</div>
-  <label>Status</label>
-  <select id="status_4">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_4_1" value="110 assist"></div>
-  <div><label>Reps</label><input id="r_4_1" value="8-10"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_4_2" value="110 assist"></div>
-  <div><label>Reps</label><input id="r_4_2" value="8-10"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_4_3" value="110 assist"></div>
-  <div><label>Reps</label><input id="r_4_3" value="8-10"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_4_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Rear-foot Elevated Split Lunge" data-sets="2" data-index="5">
-  <div class="group">Pair 3</div>
-  <div class="name">Rear-foot Elevated Split Lunge</div>
-  <div class="target">Target: Bodyweight — 2 x 12/side</div>
-  <label>Status</label>
-  <select id="status_5">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_5_1" value="BW"></div>
-  <div><label>Reps</label><input id="r_5_1" value="12/side"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_5_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_5_2" value="BW"></div>
-  <div><label>Reps</label><input id="r_5_2" value="12/side"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_5_2"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Standing Two-Handle Cable Row" data-sets="3" data-index="6">
-  <div class="group">Pair 4</div>
-  <div class="name">Standing Two-Handle Cable Row</div>
-  <div class="target">Target: 20 lb/side — 3 x 12</div>
-  <label>Status</label>
-  <select id="status_6">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_6_1" value="20/side"></div>
-  <div><label>Reps</label><input id="r_6_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_6_2" value="20/side"></div>
-  <div><label>Reps</label><input id="r_6_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_6_3" value="20/side"></div>
-  <div><label>Reps</label><input id="r_6_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_6_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Captain's Chair Knee Raise" data-sets="2" data-index="7">
-  <div class="group">Pair 4</div>
-  <div class="name">Captain's Chair Knee Raise</div>
-  <div class="target">Target: Bodyweight — 2 x 12</div>
-  <label>Status</label>
-  <select id="status_7">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_7_1" value="BW"></div>
-  <div><label>Reps</label><input id="r_7_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_7_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_7_2" value="BW"></div>
-  <div><label>Reps</label><input id="r_7_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_7_2"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Upright Cable Row" data-sets="3" data-index="8">
-  <div class="group">Finish</div>
-  <div class="name">Upright Cable Row</div>
-  <div class="target">Target: 20 lb — 3 x 12</div>
-  <label>Status</label>
-  <select id="status_8">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_8_1" value="20"></div>
-  <div><label>Reps</label><input id="r_8_1" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_8_2" value="20"></div>
-  <div><label>Reps</label><input id="r_8_2" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_2"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 3 weight</label><input id="w_8_3" value="20"></div>
-  <div><label>Reps</label><input id="r_8_3" value="12"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_8_3"></div>
-</div>
-</div>
-
-<div class="card exercise" data-name="Bird Dog Hold" data-sets="2" data-index="9">
-  <div class="group">Finish</div>
-  <div class="name">Bird Dog Hold</div>
-  <div class="target">Target: Bodyweight — 2 x 10/side, 5-second hold</div>
-  <label>Status</label>
-  <select id="status_9">
-    <option value="notdone">Not Reached / Not Done</option>
-    <option value="completed">Completed</option>
-    <option value="modified">Modified</option>
-    <option value="skipped">Skipped</option>
-  </select>
-  
-<div class="setrow">
-  <div><label>Set 1 weight</label><input id="w_9_1" value="BW"></div>
-  <div><label>Reps</label><input id="r_9_1" value="10/side"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_9_1"></div>
-</div>
-<div class="setrow">
-  <div><label>Set 2 weight</label><input id="w_9_2" value="BW"></div>
-  <div><label>Reps</label><input id="r_9_2" value="10/side"></div>
-  <div><label>Done</label><br><input class="check" type="checkbox" id="d_9_2"></div>
-</div>
-</div>
-
-
-<div class="card">
-<div class="name">Notes</div>
-<textarea id="notes" placeholder="Ran out of time, felt hard/easy, discomfort, etc."></textarea>
-</div>
-
-<div class="card">
-<div class="name">Summary to paste here</div>
-<div id="output">Tap Create Summary after your workout.</div>
-</div>
-
-<script>
-document.getElementById("date").value = new Date().toISOString().slice(0,10);
-
-function statusName(x) {
- if(x=="completed") return "Completed";
- if(x=="modified") return "Modified";
- if(x=="skipped") return "Skipped";
- return "Not Reached / Not Done";
-}
-
-function makeSummary() {
- var date = document.getElementById("date").value;
- var txt = "Workout Log - " + date + "\n\n";
- var cards = document.getElementsByClassName("exercise");
- for(var c=0; c<cards.length; c++) {
-   var index = cards[c].getAttribute("data-index");
-   var name = cards[c].getAttribute("data-name");
-   var sets = parseInt(cards[c].getAttribute("data-sets"),10);
-   var status = document.getElementById("status_"+index).value;
-   txt += name + " - " + statusName(status) + "\n";
-   for(var s=1; s<=sets; s++) {
-     var w = document.getElementById("w_"+index+"_"+s).value;
-     var r = document.getElementById("r_"+index+"_"+s).value;
-     var d = document.getElementById("d_"+index+"_"+s).checked;
-     txt += "  Set " + s + ": " + w + " x " + r + (d ? " done" : " - not done") + "\n";
-   }
-   txt += "\n";
- }
- txt += "Notes: " + document.getElementById("notes").value;
- document.getElementById("output").textContent = txt;
- saveData(false);
-}
-
-function key() { return "workout_static_" + document.getElementById("date").value; }
-
-function saveData(showAlert) {
- var data = {};
- data.notes = document.getElementById("notes").value;
- data.output = document.getElementById("output").textContent;
- var cards = document.getElementsByClassName("exercise");
- data.entries = [];
- for(var c=0; c<cards.length; c++) {
-   var index = cards[c].getAttribute("data-index");
-   var sets = parseInt(cards[c].getAttribute("data-sets"),10);
-   var entry = {status:document.getElementById("status_"+index).value, sets:[]};
-   for(var s=1; s<=sets; s++) {
-     entry.sets.push({
-       w:document.getElementById("w_"+index+"_"+s).value,
-       r:document.getElementById("r_"+index+"_"+s).value,
-       d:document.getElementById("d_"+index+"_"+s).checked
-     });
-   }
-   data.entries.push(entry);
- }
- try {
-   localStorage.setItem(key(), JSON.stringify(data));
-   if(showAlert !== false) alert("Saved.");
- } catch(e) {
-   if(showAlert !== false) alert("Save failed, but the summary still works.");
- }
-}
-
-function loadData() {
- try {
-   var raw = localStorage.getItem(key());
-   if(!raw) return;
-   var data = JSON.parse(raw);
-   document.getElementById("notes").value = data.notes || "";
-   document.getElementById("output").textContent = data.output || "Tap Create Summary after your workout.";
-   var cards = document.getElementsByClassName("exercise");
-   for(var c=0; c<data.entries.length; c++) {
-     var index = cards[c].getAttribute("data-index");
-     var sets = data.entries[c].sets;
-     document.getElementById("status_"+index).value = data.entries[c].status || "notdone";
-     for(var j=0; j<sets.length; j++) {
-       var s = j+1;
-       document.getElementById("w_"+index+"_"+s).value = sets[j].w;
-       document.getElementById("r_"+index+"_"+s).value = sets[j].r;
-       document.getElementById("d_"+index+"_"+s).checked = sets[j].d;
-     }
-   }
- } catch(e) {}
-}
-
-function copySummary() {
- makeSummary();
- var txt = document.getElementById("output").textContent;
- if(navigator.clipboard && navigator.clipboard.writeText) {
-   navigator.clipboard.writeText(txt).then(function(){alert("Copied.");}, function(){alert("Copy failed. Press and hold the summary to copy manually.");});
- } else {
-   alert("Press and hold the summary to copy manually.");
- }
-}
-
-function clearData() {
- if(confirm("Clear this workout date?")) {
-   try { localStorage.removeItem(key()); } catch(e) {}
-   location.reload();
- }
-}
-
-document.getElementById("date").addEventListener("change", loadData);
-loadData();
-</script>
-
+    <section class="card exercise-card" data-name="One-arm Cable Chest Press with Rotation">
+      <div class="pair">Pair 1</div>
+      <h2>One-arm Cable Chest Press with Rotation</h2>
+      <div class="target">Target: 15 / 17.5 / 17.5 lb — 3 × 12/side</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="15"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="17.5"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="17.5"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Cable Deadlift">
+      <div class="pair">Pair 1</div>
+      <h2>Cable Deadlift</h2>
+      <div class="target">Target: 15 / 20 / 25 lb per side — 12 / 15 / 12 reps</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="15/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="20/side"></div>
+          <div><label>Reps</label><input class="reps" value="15"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="25/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Standing Lat Pulldown">
+      <div class="pair">Pair 2</div>
+      <h2>Standing Lat Pulldown</h2>
+      <div class="target">Target: 30 lb/side — 3 × 12</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="30/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="30/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="30/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Get-ups from Low Step">
+      <div class="pair">Pair 2</div>
+      <h2>Get-ups from Low Step</h2>
+      <div class="target">Target: Bodyweight — 3 × 12</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Assisted Pull-up">
+      <div class="pair">Pair 3</div>
+      <h2>Assisted Pull-up</h2>
+      <div class="target">Target: 110 lb assistance — 3 × 8–10</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="110 assist"></div>
+          <div><label>Reps</label><input class="reps" value="8-10"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="110 assist"></div>
+          <div><label>Reps</label><input class="reps" value="8-10"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="110 assist"></div>
+          <div><label>Reps</label><input class="reps" value="8-10"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Rear-foot Elevated Split Lunge">
+      <div class="pair">Pair 3</div>
+      <h2>Rear-foot Elevated Split Lunge</h2>
+      <div class="target">Target: Bodyweight — 2 × 12/side</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12/side"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12/side"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Standing Two-Handle Cable Row">
+      <div class="pair">Pair 4</div>
+      <h2>Standing Two-Handle Cable Row</h2>
+      <div class="target">Target: 20 lb/side — 3 × 12</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="20/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="20/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="20/side"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Captain's Chair Knee Raise">
+      <div class="pair">Pair 4</div>
+      <h2>Captain's Chair Knee Raise</h2>
+      <div class="target">Target: Bodyweight — 2 × 12</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Upright Cable Row">
+      <div class="pair">Finish</div>
+      <h2>Upright Cable Row</h2>
+      <div class="target">Target: 20 lb — 3 × 12</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="20"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="20"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 3</div>
+          <div><label>Weight</label><input class="weight" value="20"></div>
+          <div><label>Reps</label><input class="reps" value="12"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+    <section class="card exercise-card" data-name="Bird Dog Hold">
+      <div class="pair">Finish</div>
+      <h2>Bird Dog Hold</h2>
+      <div class="target">Target: Bodyweight — 2 × 10/side, 5-second hold</div>
+      <label>Status</label>
+      <select class="status">
+        <option>Not Reached / Not Done</option>
+        <option>Completed</option>
+        <option>Modified</option>
+        <option>Skipped</option>
+      </select>
+      
+        <div class="set-row">
+          <div class="set-label">Set 1</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="10/side"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+        <div class="set-row">
+          <div class="set-label">Set 2</div>
+          <div><label>Weight</label><input class="weight" value="BW"></div>
+          <div><label>Reps</label><input class="reps" value="10/side"></div>
+          <label class="check-wrap"><span>Done</span><input class="done" type="checkbox"></label>
+        </div>
+    </section>
+<section class="card">
+ <h2>Notes</h2>
+ <textarea id="notes" placeholder="Pain, stiffness, form observations, or other notes"></textarea>
+</section>
+<section class="card">
+ <h2>Summary to paste here</h2>
+ <textarea id="summary" placeholder="Tap Create Summary after your workout."></textarea>
+</section>
 </main>
+<div class="bottom"><div class="bottom-inner">
+<button onclick="saveWorkout()">Save Progress</button>
+<button class="primary" onclick="createSummary()">Create Summary</button>
+</div></div>
+<script>
+const STORAGE_KEY = "workoutTrackerStaticUpdated20260718";
+const dateEl = document.getElementById("workoutDate");
+dateEl.value = new Date().toISOString().slice(0,10);
+
+function syncStatus(card){
+ const checks=[...card.querySelectorAll(".done")];
+ const status=card.querySelector(".status");
+ const done=checks.filter(x=>x.checked).length;
+ if(done===checks.length && done>0) status.value="Completed";
+ else if(done>0) status.value="Modified";
+ else if(status.value==="Completed" || status.value==="Modified") status.value="Not Reached / Not Done";
+}
+document.querySelectorAll(".exercise-card").forEach(card=>{
+ card.querySelectorAll(".done").forEach(cb=>cb.addEventListener("change",()=>syncStatus(card)));
+});
+
+function createSummary(){
+ let out=`Workout Log - ${dateEl.value || new Date().toISOString().slice(0,10)}\n\n`;
+ document.querySelectorAll(".exercise-card").forEach(card=>{
+  const name=card.dataset.name;
+  const status=card.querySelector(".status").value;
+  out += `${name} - ${status}\n`;
+  [...card.querySelectorAll(".set-row")].forEach((row,i)=>{
+   const weight=row.querySelector(".weight").value.trim() || "—";
+   const reps=row.querySelector(".reps").value.trim() || "—";
+   const done=row.querySelector(".done").checked;
+   out += `  Set ${i+1}: ${weight} x ${reps} - ${done ? "done" : "not done"}\n`;
+  });
+  out += "\n";
+ });
+ const notes=document.getElementById("notes").value.trim();
+ if(notes) out += `Notes:\n${notes}\n`;
+ document.getElementById("summary").value=out.trim();
+ saveWorkout();
+}
+
+async function copySummary(){
+ const box=document.getElementById("summary");
+ if(!box.value.trim()) createSummary();
+ try{await navigator.clipboard.writeText(box.value);}
+ catch(e){box.select();document.execCommand("copy");}
+}
+
+function saveWorkout(){
+ const data={
+  date:dateEl.value,
+  notes:document.getElementById("notes").value,
+  summary:document.getElementById("summary").value,
+  exercises:[...document.querySelectorAll(".exercise-card")].map(card=>({
+   status:card.querySelector(".status").value,
+   sets:[...card.querySelectorAll(".set-row")].map(row=>({
+    weight:row.querySelector(".weight").value,
+    reps:row.querySelector(".reps").value,
+    done:row.querySelector(".done").checked
+   }))
+  }))
+ };
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+
+function loadWorkout(){
+ const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return;
+ try{
+  const data=JSON.parse(raw);
+  dateEl.value=data.date||dateEl.value;
+  document.getElementById("notes").value=data.notes||"";
+  document.getElementById("summary").value=data.summary||"";
+  document.querySelectorAll(".exercise-card").forEach((card,i)=>{
+   if(!data.exercises?.[i]) return;
+   card.querySelector(".status").value=data.exercises[i].status||"Not Reached / Not Done";
+   card.querySelectorAll(".set-row").forEach((row,j)=>{
+    const s=data.exercises[i].sets?.[j]; if(!s) return;
+    row.querySelector(".weight").value=s.weight;
+    row.querySelector(".reps").value=s.reps;
+    row.querySelector(".done").checked=!!s.done;
+   });
+  });
+ }catch(e){}
+}
+function clearWorkout(){
+ if(!confirm("Clear this workout and restore updated defaults?")) return;
+ localStorage.removeItem(STORAGE_KEY);
+ location.reload();
+}
+loadWorkout();
+</script>
 </body>
 </html>
