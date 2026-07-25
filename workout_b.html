@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Workout B</title>
+<style>
+:root{
+  --bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;
+  --line:#d1d5db;--accent:#4f46e5;--soft:#eef2ff;
+  --done:#166534;--donebg:#dcfce7;--danger:#b91c1c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.app{width:min(100%,760px);margin:auto;padding:14px 12px calc(32px + env(safe-area-inset-bottom))}
+header{
+  background:linear-gradient(135deg,#111827,#312e81);color:#fff;
+  padding:20px 17px;border-radius:18px;margin-bottom:13px;
+  box-shadow:0 8px 24px rgba(17,24,39,.18)
+}
+h1{margin:0 0 5px;font-size:1.65rem}
+header p{margin:0;color:#e5e7eb;font-size:.94rem}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.nav a{
+  color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.4);
+  padding:8px 10px;border-radius:10px;font-weight:700;font-size:.86rem
+}
+.exercise{
+  background:var(--card);border:1px solid #e5e7eb;border-radius:16px;
+  padding:15px;margin:11px 0;box-shadow:0 3px 14px rgba(17,24,39,.07)
+}
+.exercise.done{background:var(--donebg);border-color:#86efac}
+.head{display:flex;gap:11px;align-items:flex-start}
+.head input{width:25px;height:25px;margin:0;accent-color:var(--accent);flex:0 0 auto}
+.title{font-weight:760;font-size:1.06rem;line-height:1.25}
+.note{margin-top:4px;color:var(--muted);font-size:.87rem;line-height:1.32}
+.sets{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.set{
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px
+}
+.set-title{font-size:.76rem;color:var(--muted);font-weight:700;margin-bottom:7px}
+.entry{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+input[type=number],textarea,select{
+  width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;
+  color:var(--text);font-size:20px;padding:11px 8px;text-align:center
+}
+input[type=number]:focus,textarea:focus,select:focus{
+  outline:3px solid #c7d2fe;border-color:var(--accent)
+}
+.label{text-align:center;color:var(--muted);font-size:.68rem;margin-top:4px}
+.section{
+  background:#fff;border:1px solid #e5e7eb;border-radius:16px;
+  padding:15px;margin-top:13px
+}
+.section h2{font-size:1.02rem;margin:0 0 10px}
+textarea{min-height:80px;text-align:left;font-size:16px;resize:vertical}
+select{font-size:16px;text-align:left}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+button{
+  min-height:50px;border:0;border-radius:12px;font-size:16px;font-weight:750;padding:12px
+}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:var(--soft);color:#3730a3;border:1px solid #c7d2fe}
+.danger{grid-column:1/-1;background:#fee2e2;color:var(--danger);border:1px solid #fecaca}
+#status{text-align:center;color:var(--done);font-weight:650;min-height:22px;margin-top:9px}
+.home-grid{display:grid;gap:12px}
+.home-card{
+  display:block;background:#fff;color:var(--text);text-decoration:none;
+  border:1px solid #e5e7eb;border-radius:16px;padding:18px;
+  box-shadow:0 3px 14px rgba(17,24,39,.07)
+}
+.home-card strong{display:block;font-size:1.1rem;margin-bottom:5px}
+.home-card span{color:var(--muted);font-size:.92rem}
+@media(max-width:560px){
+  .sets{grid-template-columns:1fr}
+  .set{display:grid;grid-template-columns:58px 1fr;align-items:center;gap:8px}
+  .set-title{margin:0}
+  .actions{grid-template-columns:1fr}
+  .danger{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+  <h1>Workout B</h1>
+  <p>All weights are pounds. Tap a number and replace it.</p>
+  <div class="nav">
+    <a href="workout_home.html">Home</a>
+    <a href="workout_a.html">Workout A</a>
+    <a href="workout_b.html">Workout B</a>
+    <a href="optional_additions.html">Small Additions</a>
+  </div>
+</header>
+<div id="exerciseList"></div>
+<section class="section">
+  <h2>Workout notes</h2>
+  <textarea id="notes" placeholder="Pain, form issue, or change for next time"></textarea>
+</section>
+<section class="section">
+  <h2>Overall difficulty</h2>
+  <select id="difficulty">
+    <option value="">Select...</option>
+    <option>Easy</option>
+    <option>Just right</option>
+    <option>Hard</option>
+    <option>Too hard</option>
+  </select>
+</section>
+<div class="actions">
+  <button class="primary" id="copyBtn">Copy Summary</button>
+  <button class="secondary" id="saveBtn">Save</button>
+  <button class="danger" id="resetBtn">Reset</button>
+</div>
+<div id="status"></div>
+</main>
+<script>
+const exercises=[{"name": "Silver Pole Cable Push", "weight": 13, "reps": 12, "note": "Enter the weight for one side."}, {"name": "Kettlebell Deadlift", "weight": 52, "reps": 12, "note": "Kettlebell between the feet."}, {"name": "Stability Ball Plank In-and-Outs", "weight": "", "reps": 12, "note": "Leave weight blank; record reps only."}, {"name": "High Two-Handled Rope Row", "weight": 20, "reps": 12, "note": "Cable at face height."}, {"name": "Kettlebell Swing", "weight": 22, "reps": 12, "note": "Starting kettlebell weight corrected to 22 lb."}, {"name": "Smith Machine Underhand Pull-up", "weight": "", "reps": 12, "note": "Leave weight blank; record reps only."}, {"name": "Side Bends", "weight": 10, "reps": 12, "note": "Enter plate weight; perform both sides."}];
+const KEY="workout-b-v2";
+const list=document.getElementById("exerciseList");
+const status=document.getElementById("status");
+
+function card(ex,i){
+  const el=document.createElement("section");
+  el.className="exercise";
+  const sets = ex.sets || 3;
+  el.innerHTML=`
+    <div class="head">
+      <input type="checkbox" id="done-${i}" aria-label="Mark ${ex.name} complete">
+      <div><div class="title">${ex.name}</div><div class="note">${ex.note||""}</div></div>
+    </div>
+    <div class="sets">
+      ${Array.from({length:sets},(_,j)=>j+1).map(s=>`
+        <div class="set">
+          <div class="set-title">Set ${s}</div>
+          <div class="entry">
+            <div>
+              <input id="w-${i}-${s}" type="number" inputmode="decimal" step="0.5"
+                value="${Array.isArray(ex.weight)?(ex.weight[s-1]??""):(ex.weight??"")}"
+                aria-label="${ex.name} set ${s} weight">
+              <div class="label">${ex.weightLabel||"weight"}</div>
+            </div>
+            <div>
+              <input id="r-${i}-${s}" type="number" inputmode="numeric" step="1"
+                value="${Array.isArray(ex.reps)?(ex.reps[s-1]??""):(ex.reps??12)}"
+                aria-label="${ex.name} set ${s} reps">
+              <div class="label">${ex.repLabel||"reps"}</div>
+            </div>
+          </div>
+        </div>`).join("")}
+    </div>`;
+  const check=el.querySelector('input[type="checkbox"]');
+  check.addEventListener("change",()=>{el.classList.toggle("done",check.checked);save(false)});
+  el.querySelectorAll("input").forEach(x=>x.addEventListener("change",()=>save(false)));
+  return el;
+}
+exercises.forEach((ex,i)=>list.appendChild(card(ex,i)));
+
+function data(){
+  return {
+    difficulty:document.getElementById("difficulty").value,
+    notes:document.getElementById("notes").value,
+    exercises:exercises.map((ex,i)=>({
+      name:ex.name,
+      done:document.getElementById(`done-${i}`).checked,
+      sets:Array.from({length:ex.sets||3},(_,j)=>{
+        const s=j+1;
+        return {
+          weight:document.getElementById(`w-${i}-${s}`).value,
+          reps:document.getElementById(`r-${i}-${s}`).value
+        };
+      })
+    }))
+  };
+}
+function save(show=true){
+  localStorage.setItem(KEY,JSON.stringify(data()));
+  if(show)flash("Saved on this device.");
+}
+function load(){
+  const raw=localStorage.getItem(KEY);if(!raw)return;
+  try{
+    const d=JSON.parse(raw);
+    d.exercises?.forEach((ex,i)=>{
+      const c=document.getElementById(`done-${i}`);if(!c)return;
+      c.checked=!!ex.done;c.closest(".exercise").classList.toggle("done",c.checked);
+      ex.sets?.forEach((set,j)=>{
+        const s=j+1;
+        const w=document.getElementById(`w-${i}-${s}`);
+        const r=document.getElementById(`r-${i}-${s}`);
+        if(w)w.value=set.weight??"";
+        if(r)r.value=set.reps??"";
+      });
+    });
+    document.getElementById("difficulty").value=d.difficulty||"";
+    document.getElementById("notes").value=d.notes||"";
+  }catch(e){}
+}
+function summary(){
+  const d=data();
+  const date=new Date().toLocaleDateString("en-US",{year:"numeric",month:"2-digit",day:"2-digit"});
+  const lines=[`Workout Log - ${date}`,"","Workout B"];
+  d.exercises.forEach(ex=>{
+    lines.push("",`${ex.name} - ${ex.done?"Completed":"Not Done"}`);
+    ex.sets.forEach((set,j)=>{
+      const wt=set.weight?`${set.weight} x `:"";
+      lines.push(`  Set ${j+1}: ${wt}${set.reps||"—"}${ex.done?" done":""}`);
+    });
+  });
+  if(d.difficulty)lines.push("",`Overall difficulty: ${d.difficulty}`);
+  if(d.notes.trim())lines.push("",`Notes: ${d.notes.trim()}`);
+  return lines.join("\n");
+}
+async function copy(){
+  const text=summary();
+  try{await navigator.clipboard.writeText(text)}
+  catch(e){
+    const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);
+    t.select();document.execCommand("copy");t.remove();
+  }
+  save(false);flash("Summary copied.");
+}
+function flash(msg){status.textContent=msg;setTimeout(()=>status.textContent="",2800)}
+document.getElementById("saveBtn").onclick=()=>save(true);
+document.getElementById("copyBtn").onclick=copy;
+document.getElementById("resetBtn").onclick=()=>{
+  if(confirm("Clear saved entries and restore the starting numbers?")){
+    localStorage.removeItem(KEY);location.reload();
+  }
+};
+document.getElementById("notes").onchange=()=>save(false);
+document.getElementById("difficulty").onchange=()=>save(false);
+load();
+</script>
+</body>
+</html>
