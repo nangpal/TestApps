@@ -44,26 +44,20 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;b
 </section>
 
 <section id="addCourseCard" class="card">
- <div class="stepTitle">Add New Course</div>
- <div class="row">
-  <div><label>Course Name</label><input id="newCourseName" placeholder="e.g. Pine Valley"/></div>
-  <div><label>Holes</label><select id="newCourseHoles"><option value="18">18</option><option value="9">9</option></select></div>
- </div>
- <div class="row">
-  <div><label>Tee Name</label><input id="newCourseTee" placeholder="e.g. Blue"/></div>
- </div>
- <div class="section">
-  <label>Par per hole (comma-separated, in order)</label>
+ <div class="row" style="align-items:center;margin-bottom:8px"><div class="stepTitle" style="margin:0">Custom Courses</div></div>
+ <div class="wrap" id="customCourseList" style="margin-bottom:8px"></div>
+ <button class="secondary" onclick="toggleAddCourse()" id="addCourseToggle">+ Add New Course</button>
+ <div id="addCourseForm" class="hidden" style="margin-top:10px">
+  <div class="row">
+   <div><label>Course Name</label><input id="newCourseName" placeholder="e.g. Pine Valley"/></div>
+   <div><label>Holes</label><select id="newCourseHoles"><option value="18">18</option><option value="9">9</option></select></div>
+  </div>
+  <div class="row"><div><label>Tee Name</label><input id="newCourseTee" placeholder="e.g. Blue"/></div></div>
+  <label>Par per hole (comma-separated)</label>
   <input id="newCoursePar" placeholder="4,4,3,5,4,4,3,4,5,4,4,3,5,4,4,3,4,5"/>
- </div>
- <div class="section">
-  <label>Yardage per hole (comma-separated, optional)</label>
-  <input id="newCourseYards" placeholder="Leave blank if unknown — can fill in later"/>
- </div>
- <button onclick="saveNewCourse()">Save Course</button>
- <div class="section">
-  <label>Your Custom Courses</label>
-  <div class="wrap" id="customCourseList"></div>
+  <label style="margin-top:8px">Yardage per hole (optional)</label>
+  <input id="newCourseYards" placeholder="Leave blank if unknown"/>
+  <button onclick="saveNewCourse()">Save Course</button>
  </div>
 </section>
 
@@ -181,6 +175,12 @@ let round=null, holeIdx=0, customCourses={};
 const CUSTOM_COURSES_KEY='golfOS_customCourses';
 function $(id){return document.getElementById(id)}
 function init(){loadCustomCourses(); fillSelect('course',Object.keys(courses)); onCourseChange(); $('course').addEventListener('change',onCourseChange); renderCustomCourseList();}
+function toggleAddCourse(){
+ const form=$('addCourseForm'), btn=$('addCourseToggle');
+ const opening=form.classList.contains('hidden');
+ form.classList.toggle('hidden');
+ btn.textContent=opening?'− Cancel':'+ Add New Course';
+}
 function loadCustomCourses(){
  try{ customCourses=JSON.parse(localStorage.getItem(CUSTOM_COURSES_KEY)||'{}'); }catch(e){ customCourses={}; }
  Object.keys(customCourses).forEach(name=>{ courses[name]=customCourses[name]; });
@@ -219,6 +219,7 @@ function saveNewCourse(){
  fillSelect('course',Object.keys(courses)); $('course').value=name; onCourseChange(); $('tee').value=teeName;
  renderCustomCourseList();
  $('newCourseName').value='';$('newCourseTee').value='';$('newCoursePar').value='';$('newCourseYards').value='';
+ toggleAddCourse();
  showToast('Saved "'+name+'". Select it above to start a round.');
 }
 function fillSelect(id,arr){$(id).innerHTML=arr.map(x=>`<option value="${x}">${x}</option>`).join('')}
@@ -227,7 +228,7 @@ function startRound(){
  const c=$('course').value,t=$('tee').value; const course=courses[c];
  round={date:new Date().toISOString(),course:c,tee:t,goal:$('goal').value,cue:$('cue').value,courseNote:course.note||'',
   holes:course.par.map((p,i)=>({hole:i+1,par:p,yards:course.tees[t][i],score:p,putts:2,fir:null,gir:null,teeClub:null,impactFace:null,impactHeight:null,reachedZoneIn2:null,zoneIn3:null,twoPutts:null,failures:[],drivers:[],note:''}))};
- holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden'); renderHole(); save();
+ holeIdx=0; $('setup').classList.add('hidden');$('addCourseCard').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden'); renderHole(); save();
 }
 function renderHole(){
  const h=round.holes[holeIdx];
@@ -291,7 +292,7 @@ function showReview(){
  save();
 }
 function save(){localStorage.setItem('golfOSv4_0',JSON.stringify(round))}
-function loadSaved(){const x=localStorage.getItem('golfOSv4_0'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
+function loadSaved(){const x=localStorage.getItem('golfOSv4_0'); if(x){round=JSON.parse(x); holeIdx=0; $('setup').classList.add('hidden');$('addCourseCard').classList.add('hidden');$('play').classList.remove('hidden');$('footer').classList.remove('hidden');renderHole();}}
 function newRound(){localStorage.removeItem('golfOSv4_0'); location.reload()}
 function getJSON(){return JSON.stringify(round,null,2)}
 function downloadJSON(){const b=new Blob([getJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`golf_round_${round.course}_${round.date.slice(0,10)}.json`; a.click();}
